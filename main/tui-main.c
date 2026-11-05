@@ -16,11 +16,8 @@
 #include "editor/semicolon_syntax.h"
 #include "icon/icon_catalog.h"
 #include "exception/throw.h"
-#include "annotation/definition.h"
-#include "annotation/overview.h"
-#include "annotation/test.h"
-#include "annotation/debug.h"
-#include "platform/platform.h"
+#include "annotation/annotation.h"
+#include "lifetime/lifetime/platform.h"
 #include <locale.h>
 #include <limits.h>
 #include <wchar.h>
@@ -269,7 +266,7 @@ extern char **environ;
  *   static void editorKey(FileText *, int) / autosave(FileText *, const char *)
  *   static char *workspaceRunSource(const char *) / runBPath(bool)
  *     select the workspace graph for canonical workspace C tests; other files
- *     keep the standalone b adapter. Neither path executes before a Run click.
+ *     keep the standalone b.sh adapter. Neither path executes before a Run click.
  *   static bool runSourceHasMain/runEligible/runStart(...) / void runPoll/runStop/runPaint(...)
  *     admit a possible entry point, supervise bounded child output, then show it
  *     in a separate console tab; admission does not guarantee compilation.
@@ -373,8 +370,8 @@ extern char **environ;
  *   inserts printable UTF-8 bytes, splits/joins/deletes lines and autosaves after one
  *   idle second; Markdown preview is read-only. Save conflicts preserve the open buffer.
  *   No network is touched; a program is executed only after an explicit Run
- *   click. Workspace C test files use the project's registered b graph; other
- *   supported files use standalone b, which cannot infer their dependencies.
+ *   click. Workspace C test files use the project's registered b.sh graph; other
+ *   supported files use standalone b.sh, which cannot infer their dependencies.
  *   A `.md` or
  *   `.markdown` file starts in read-only Markdown preview; the top-right
  *   `[preview]`/`[code]` controls switch presentation, and vertical scroll keys
@@ -1119,12 +1116,12 @@ static void syncRunControls(Scene *scene, const char *path, const FileText *file
     }
 }
 
-// A C test in THIS checkout borrows its registered graph, not standalone b's
+// A C test in THIS checkout borrows its registered graph, not standalone b.sh's
 // single-source compiler. Resolve the file first so a relative path or a symlink
 // cannot accidentally select the graph by spelling alone. Other projects retain
 // the ordinary standalone adapter; a main() token is not dependency discovery.
 static char *workspaceRunSource(const char *path) {
-    const char *marker = strstr(__FILE__, "/suite/projects/semicolon/src/main/tui-main.c");
+    const char *marker = strstr(__FILE__, "/semicolon/main/tui-main.c");
     if (path == nullptr || marker == nullptr)
         return nullptr;
     char *source = realpath(path, nullptr);
@@ -1132,9 +1129,9 @@ static char *workspaceRunSource(const char *path) {
         return nullptr;
     size_t rootLength = (size_t) (marker - __FILE__);
     size_t sourceLength = strlen(source);
-    bool owned = sourceLength > rootLength + sizeof "/tests/" - 1u
+    bool owned = sourceLength > rootLength + sizeof "/test/" - 1u
               && strncmp(source, __FILE__, rootLength) == 0
-              && strncmp(source + rootLength, "/tests/", sizeof "/tests/" - 1u) == 0;
+              && strncmp(source + rootLength, "/test/", sizeof "/test/" - 1u) == 0;
     if (owned)
         return source;
     free(source);
@@ -1145,10 +1142,10 @@ static char *runBPath(bool workspaceGraph) {
     const char *override = getenv("SEMICOLON_B_PATH");
     if (override != nullptr && *override != '\0')
         return strdup(override);
-    const char *marker = strstr(__FILE__, "/suite/projects/semicolon/src/main/tui-main.c");
+    const char *marker = strstr(__FILE__, "/semicolon/main/tui-main.c");
     if (marker != nullptr) {
         size_t workspaceLength = (size_t) (marker - __FILE__);
-        const char *tool = workspaceGraph ? "/tools/b" : "/suite/personal/b/b";
+        const char *tool = workspaceGraph ? "/tools/b.sh" : "/suite/personal/b.sh/b.sh";
         size_t length = workspaceLength + strlen(tool) + 1u;
         char *path = malloc(length);
         if (path != nullptr) {
@@ -1159,10 +1156,10 @@ static char *runBPath(bool workspaceGraph) {
         }
     }
     if (workspaceGraph) {
-        THROW("semicolon: workspace b is unavailable; refusing standalone compilation");
+        THROW("semicolon: workspace b.sh is unavailable; refusing standalone compilation");
         return nullptr;
     }
-    return strdup("b");
+    return strdup("b.sh");
 }
 
 static bool runStart(const char *path, const FileText *file) {
@@ -1175,7 +1172,7 @@ static bool runStart(const char *path, const FileText *file) {
     }
     int outputPipe[2];
     if (pipe(outputPipe) != 0) {
-        THROW("semicolon: cannot create b console pipe: %s", strerror(errno));
+        THROW("semicolon: cannot create b.sh console pipe: %s", strerror(errno));
         return false;
     }
     int nullInput = open("/dev/null", O_RDONLY);
@@ -1235,7 +1232,7 @@ static bool runStart(const char *path, const FileText *file) {
     (void) close(outputPipe[1]);
     if (error != 0) {
         (void) close(outputPipe[0]);
-        THROW("semicolon: b could not start: %s", strerror(error));
+        THROW("semicolon: b.sh could not start: %s", strerror(error));
         return false;
     }
     int flags = fcntl(outputPipe[0], F_GETFL, 0);
@@ -5578,7 +5575,7 @@ static int dumpFrame(int width, int height, FileText *file) {
 // A diagnostic that prints what the terminal ACTUALLY sends. Whether a trackpad
 // emits a horizontal wheel (buttons 66/67) is a property of the terminal emulator,
 // not of this program, so arguing about it is pointless: swipe and read the answer.
-;;DEBUG
+;;VALIDATOR
 static int runInputProbe(void) {
     if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO)) {
         THROW("semicolon --input-probe requires a terminal");
@@ -5660,7 +5657,7 @@ static int runInputProbe(void) {
 // A diagnostic that answers one question with the terminal's own words: what colour is
 // your background? Every fade in the shell is composited against that value, so when a
 // fade looks wrong, this is the number to read first and SEMICOLON_BG is the fix.
-;;DEBUG
+;;VALIDATOR
 static int runBackgroundProbe(void) {
     if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO)) {
         THROW("semicolon --bg-probe requires a terminal");

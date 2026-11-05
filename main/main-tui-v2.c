@@ -5,8 +5,7 @@
 #include "ui/surface/terminal_canvas.h"
 #include "ui/surface/terminal_surface.h"
 #include "format/terminal_style.h"
-#include "annotation/definition.h"
-#include "annotation/overview.h"
+#include "annotation/annotation.h"
 #include "exception/throw.h"
 
 #include <locale.h>
@@ -200,7 +199,11 @@ int main(int argc, char **argv) {
     }
 
     (void) setlocale(LC_CTYPE, "");
-    TerminalPanel *root = SemicolonV2MainPanel_create();
+    // Unfinished: the v2 panel tree builder (SemicolonV2MainPanel_create) is not
+    // written yet, so the call is parked here and the preview reports it instead
+    // of failing to compile. Restore the call when the builder lands.
+    TerminalPanel *root = nullptr;
+    // TerminalPanel *root = SemicolonV2MainPanel_create();
     if (root == nullptr) {
         THROW("smc2: could not create the v2 panel tree");
         return 1;

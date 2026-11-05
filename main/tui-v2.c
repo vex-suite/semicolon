@@ -15,8 +15,7 @@
 #include "nio/mem.h"
 #include "oop/type.h"
 #include "exception/throw.h"
-#include "annotation/definition.h"
-#include "annotation/overview.h"
+#include "annotation/annotation.h"
 
 #include <locale.h>
 #include <limits.h>
@@ -700,7 +699,7 @@ int main(int argumentCount, char **argumentVector) {
                                     size_t documentCol = TerminalMarkdownView_rowScrollX(markdownView, documentRow) + (pointerEvent.x - contentX);
                                     TerminalMarkdownAction action = TerminalMarkdownView_actionAt(markdownView, documentRow, documentCol);
                                     if (action.kind == TERMINAL_MARKDOWN_ACTION_COPY_CODE) {
-                                        char *copyBuffer = (char *) Memory_alloc(TYPE_BYTE_ARRAY, 65536u);
+                                        char *copyBuffer = (char*) Memory_alloc(TYPE_BYTE_ARRAY, 65536u);
                                         if (copyBuffer != nullptr) {
                                             size_t bytesWritten = 0u;
                                             if (TerminalMarkdownView_copyBlock(markdownView, action.block, copyBuffer, 65536u, &bytesWritten) && bytesWritten > 0u) {
