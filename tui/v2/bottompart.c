@@ -2,8 +2,7 @@
 #include "tui/v2/palette.h"
 #include "ui/text/terminal_breadcrumb.h"
 #include "format/terminal_style.h"
-#include "annotation/definition.h"
-#include "annotation/overview.h"
+#include "annotation/annotation.h"
 
 #include <stdio.h>
 #include <string.h>

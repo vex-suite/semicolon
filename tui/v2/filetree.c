@@ -4,8 +4,7 @@
 #include "nio/mem.h"
 #include "oop/type.h"
 #include "format/terminal_style.h"
-#include "annotation/definition.h"
-#include "annotation/overview.h"
+#include "annotation/annotation.h"
 
 #include <dirent.h>
 #include <fnmatch.h>

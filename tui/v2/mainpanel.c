@@ -6,9 +6,8 @@
 #include "nio/mem.h"
 #include "oop/type.h"
 #include "format/terminal_style.h"
-#include "annotation/definition.h"
-#include "annotation/overview.h"
-#include "platform/platform.h"
+#include "annotation/annotation.h"
+#include "lifetime/lifetime/platform.h"
 
 #include <errno.h>
 #include <stdio.h>
