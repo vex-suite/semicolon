@@ -63,7 +63,7 @@ def sources(determinant, vexspoke, engine, language):
     produced = sorted(determinant.glob("ui/*/*.c"))
     produced += sorted(determinant.glob("events/*.c"))
     produced += sorted(determinant.glob("format/*.c"))
-    produced += [vexspoke / "primitive/string.c", vexspoke / "atomic/spin.c",
+    produced += [vexspoke / "primitive/vex-string.c", vexspoke / "atomic/spin.c",
                  vexspoke / "system/browser.c", engine / "nio/mem.c"]
     # The real system clipboard is an R2 engine seam: NSPasteboard on macOS, the
     # in-process stub elsewhere. A preview never reaches the pasteboard itself.
