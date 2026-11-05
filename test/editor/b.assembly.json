@@ -1,0 +1,62 @@
+{
+  "application": {
+    "id": "local.vexgraph.language-bridge",
+    "name": "language_bridge",
+    "displayName": "language_bridge",
+    "version": "0.1.0",
+    "type": "cli",
+    "authors": [
+      "vexgraph"
+    ],
+    "publisher": "vexgraph",
+    "description": "semicolon/test/editor owner test",
+    "license": "UNLICENSED",
+    "homepage": "",
+    "icon": ""
+  },
+  "build": {
+    "entry": "language_bridge_test.c",
+    "sources": [
+      "language_bridge_test.c"
+    ],
+    "includes": [
+      "semicolon",
+      "darling",
+      "vexspoke",
+      "re",
+      "lifetime",
+      "graphvex",
+      "samplerate",
+      "impedance",
+      "determinant",
+      "language",
+      "graphvex/vulkan"
+    ],
+    "dependencies": [
+      "semicolon",
+      "darling",
+      "vexspoke",
+      "re",
+      "lifetime",
+      "determinant",
+      "language",
+      "graphvex",
+      "samplerate"
+    ],
+    "defines": [],
+    "options": [
+      "-Wall",
+      "-Wextra",
+      "-Wno-deprecated-declarations"
+    ],
+    "link": "executable"
+  },
+  "payload": {
+    "files": []
+  },
+  "targets": {},
+  "formats": [
+    "portable"
+  ],
+  "statePolicy": "clean"
+}
