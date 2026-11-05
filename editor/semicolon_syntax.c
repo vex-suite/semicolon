@@ -1,7 +1,6 @@
 #include "editor/semicolon_syntax.h"
 #include "adapters/c/c23_highlights.h"
-#include "annotation/definition.h"
-#include "annotation/overview.h"
+#include "annotation/annotation.h"
 #include "exception/throw.h"
 #include <stdlib.h>
 #include <string.h>
