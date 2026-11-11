@@ -69,7 +69,7 @@ def sources(determinant, vexspoke, engine, language):
     # in-process stub elsewhere. A preview never reaches the pasteboard itself.
     produced += [engine / ("io/clipboard_mac.m" if sys.platform == "darwin"
                           else "io/clipboard_stub.c")]
-    produced += [ROOT / "src/editor/semicolon_syntax.c"]
+    produced += [ROOT / "editor/semicolon_syntax.c"]
     produced += [language / name for name in (
         "adapters/c/c23_highlights.c", "adapters/c/c23_lexer.c",
         "adapters/c/c23_lex_step.c", "syntax/role.c",
@@ -81,18 +81,18 @@ def build(output, compiler=None, entry=None, extra_sources=None):
     if compiler is None:
         compiler = os.environ.get("CC", "clang")
     determinant = Path(os.environ.get("SEMICOLON_DETERMINANT_SOURCE_DIR",
-                                      WORKSPACE / "vexgraph-ecosystem/determinant/src"))
+                                      WORKSPACE / "vex/determinant"))
     vexspoke = Path(os.environ.get("SEMICOLON_VEXSPOKE_SOURCE_DIR",
-                                   WORKSPACE / "vexgraph-ecosystem/vexspoke/src"))
+                                   WORKSPACE / "vex/vexspoke"))
     engine = Path(os.environ.get("SEMICOLON_ENGINE_SOURCE_DIR",
-                                  WORKSPACE / "vexgraph-ecosystem/relational-engine/src"))
+                                  WORKSPACE / "vex/re"))
     language = Path(os.environ.get("SEMICOLON_LANGUAGE_SOURCE_DIR",
-                                    WORKSPACE / "vexgraph-ecosystem/language"))
+                                    WORKSPACE / "vex/language"))
     # R0 owns the canonical platform identity header; every tier reaches it
     # downward (the One File, All Platforms Law, home-is-the-floor clause).
     lifetime = Path(os.environ.get("SEMICOLON_LIFETIME_SOURCE_DIR",
-                                    WORKSPACE / "vexgraph-ecosystem/lifetime/src"))
-    entry = Path(entry) if entry is not None else ROOT / "src/main/tui-main.c"
+                                    WORKSPACE / "vex/lifetime"))
+    entry = Path(entry) if entry is not None else ROOT / "main/tui-main.c"
     if not entry.is_file():
         raise ValueError(f"missing entry point: {entry}")
     extra_sources = [Path(source) for source in (extra_sources or [])]

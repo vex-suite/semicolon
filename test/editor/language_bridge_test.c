@@ -25,14 +25,14 @@ int main(int argc, char **argv) {
     TerminalCanvas canvas = TerminalCanvas(gCells, gStyles, gFg, gBg, 112u, 12u);
     TerminalCanvas_fill(&canvas, ' ', TerminalPen());
     TerminalPanel_paint(scene.root, &canvas);
-    uint32_t glyphs[112u * 12u];
+    u32 glyphs[112u * 12u];
     memcpy(glyphs, gCells, sizeof glyphs);
-    size_t codeLeft = codeLeftColumn(scene.railWidth, scene.numberWidth);
-    size_t y = editorFirstRow();
+    bytes codeLeft = codeLeftColumn(scene.railWidth, scene.numberWidth);
+    bytes y = editorFirstRow();
     // Snapshot the genuinely painted run/hint glyph attributes, not a guessed
     // replacement design. They must remain above the long first source line.
-    uint32_t actionFg[112];
-    uint8_t actionStyles[112];
+    u32 actionFg[112];
+    u8 actionStyles[112];
     memcpy(actionFg, gFg + y * 112u, sizeof actionFg);
     memcpy(actionStyles, gStyles + y * 112u, sizeof actionStyles);
     paintEditorSyntax(&canvas, &file, &scene, 0u, 0u);
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
     assert(TerminalCanvas_fgAt(&canvas, codeLeft + 2u, y + 3u) == 0xA0F5A0FFu);
     assert(TerminalCanvas_fgAt(&canvas, codeLeft + 5u, y + 3u) == 0x9CDCFEFFu);
     assert(TerminalCanvas_fgAt(&canvas, codeLeft + 3u, y + 4u) == 0x008000FFu);
-    for (size_t x = 112u - TUI_HINT_CHIP_CELLS - TUI_RUN_CHIP_CELLS; x < 112u; ++x) {
+    for (bytes x = 112u - TUI_HINT_CHIP_CELLS - TUI_RUN_CHIP_CELLS; x < 112u; ++x) {
         if (actionFg[x] != COL_TEXT) {
             assert(gFg[y * 112u + x] == actionFg[x]);
             assert(gStyles[y * 112u + x] == actionStyles[x]);
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
     assert(file.syntaxCurrent);
     // Inject a cold extent refusal without exhausting host memory. A failed
     // replacement disables old ink, preserves glyphs, then recovers on an edit.
-    size_t oldLength = file.lineLengths[0];
+    bytes oldLength = file.lineLengths[0];
     file.lineLengths[0] = SIZE_MAX;
     file.syntaxPending = true;
     fileSyntaxRefresh(&file);
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
     TerminalCanvas_fill(&canvas, ' ', TerminalPen());
     sceneSyncRows(&scene, &file, 0u, 0u, 10u);
     TerminalPanel_paint(scene.root, &canvas);
-    uint32_t oldInk = TerminalCanvas_fgAt(&canvas, codeLeft, y);
+    u32 oldInk = TerminalCanvas_fgAt(&canvas, codeLeft, y);
     paintEditorSyntax(&canvas, &file, &scene, 0u, 0u);
     assert(TerminalCanvas_fgAt(&canvas, codeLeft, y) == oldInk);
     assert(fileInsertBytes(&file, 0u, 0u, " ", 1u));

@@ -21,22 +21,22 @@
  * CLASS: SemicolonSyntax (editor/semicolon_syntax.c)
  * STRUCT FIELDS (Mirroring this opaque class)
  *   char *source                  owned immutable normalized source
- *   size_t length                 source bytes, excluding NUL
- *   size_t *starts                owned line-start offsets plus end sentinel
- *   size_t lineCount              initialized row count
+ *   bytes length                 source bytes, excluding NUL
+ *   bytes *starts                owned line-start offsets plus end sentinel
+ *   bytes lineCount              initialized row count
  *   C23Highlights *highlights     owned ordered Language semantic-ish spans
  *   TerminalPen pens[SYNTAX_ROLE_IDENTIFIER + 1u] current role palette
- *   size_t refusals               storage refusals in this owner's lifetime
+ *   bytes refusals               storage refusals in this owner's lifetime
  * FUNCTION REGISTRY
  *   SemicolonSyntax *SemicolonSyntax_0(void), SemicolonSyntax(), zero()
  *   void SemicolonSyntax_free(SemicolonSyntax *self)
  *   bool SemicolonSyntax_setLines(self,const char *const *lines,
- *                                const size_t *lengths,size_t count)
+ *                                const bytes *lengths,bytes count)
  *   bool SemicolonSyntax_acceptsPath(const char *path)
  *   bool SemicolonSyntax_setPen(self,SyntaxRole role,TerminalPen pen)
  *   TerminalPen SemicolonSyntax_getPen(const self,SyntaxRole role)
- *   TerminalPen SemicolonSyntax_penAt(const self,size_t line,size_t byte)
- *   size_t SemicolonSyntax_getLineCount/getSpanCount/exhaustionCount(const self)
+ *   TerminalPen SemicolonSyntax_penAt(const self,bytes line,bytes byte)
+ *   bytes SemicolonSyntax_getLineCount/getSpanCount/exhaustionCount(const self)
  *   TerminalProjection SemicolonSyntax_toString/toStringStruct(const self)
  * PRIVATE FUNCTIONS
  *   refuse(self,request)           report first storage refusal; count every one
@@ -53,12 +53,12 @@
 
 struct SemicolonSyntax {
     char *source;
-    size_t length;
-    size_t *starts;
-    size_t lineCount;
+    bytes length;
+    bytes *starts;
+    bytes lineCount;
     C23Highlights *highlights;
     TerminalPen pens[SYNTAX_ROLE_IDENTIFIER + 1u];
-    size_t refusals;
+    bytes refusals;
 };
 
 // Defaults initialize configurable pens, never override a consumer's current pen.
@@ -72,7 +72,7 @@ struct SemicolonSyntax {
 #define SYNTAX_COMMENT_DEFAULT TERMINAL_RGB(0x80, 0x80, 0x80)
 #define SYNTAX_DOC_COMMENT_DEFAULT TERMINAL_RGB(0x6A, 0x99, 0x55)
 
-static bool refuse(SemicolonSyntax *self, size_t request) {
+static bool refuse(SemicolonSyntax *self, bytes request) {
     if ((*self).refusals == 0u)
         THROW("SemicolonSyntax storage refused: request %zu bytes; allocation/extent bound reached", request);
     if ((*self).refusals != SIZE_MAX)
@@ -88,7 +88,7 @@ SemicolonSyntax *SemicolonSyntax_0(void) {
     }
     // Screenshot-inspired defaults, not exact theme extraction. Every role pen
     // is replaceable through setPen; the terminal may quantize these RGB values.
-    for (size_t role = 0u; role <= SYNTAX_ROLE_IDENTIFIER; ++role)
+    for (bytes role = 0u; role <= SYNTAX_ROLE_IDENTIFIER; ++role)
         (*self).pens[role] = TerminalPen(TERMINAL_STYLE_NONE, SYNTAX_TEXT_DEFAULT);
     (*self).pens[SYNTAX_ROLE_KEYWORD] = TerminalPen(0u, SYNTAX_KEYWORD_DEFAULT);
     (*self).pens[SYNTAX_ROLE_TYPE] = TerminalPen(0u, SYNTAX_TYPE_DEFAULT);
@@ -131,15 +131,15 @@ bool SemicolonSyntax_acceptsPath(const char *path) {
 }
 
 bool SemicolonSyntax_setLines(SemicolonSyntax *self, const char *const *lines,
-                              const size_t *lengths, size_t count) {
+                              const bytes *lengths, bytes count) {
     if (self == nullptr || (count != 0u && (lines == nullptr || lengths == nullptr))) {
         THROW("SemicolonSyntax rejected missing editor rows");
         return false;
     }
-    if (count >= SIZE_MAX / sizeof(size_t))
+    if (count >= SIZE_MAX / sizeof(bytes))
         return refuse(self, SIZE_MAX);
-    size_t length = 0u;
-    for (size_t line = 0u; line < count; ++line) {
+    bytes length = 0u;
+    for (bytes line = 0u; line < count; ++line) {
         if (lines[line] == nullptr && lengths[line] != 0u) {
             THROW("SemicolonSyntax rejected missing row bytes");
             return false;
@@ -151,15 +151,15 @@ bool SemicolonSyntax_setLines(SemicolonSyntax *self, const char *const *lines,
     if (length == SIZE_MAX)
         return refuse(self, SIZE_MAX);
     char *source = malloc(length + 1u);
-    size_t *starts = malloc((count + 1u) * sizeof *starts);
+    bytes *starts = malloc((count + 1u) * sizeof *starts);
     if (source == nullptr || starts == nullptr) {
-        size_t request = source == nullptr ? length + 1u : (count + 1u) * sizeof *starts;
+        bytes request = source == nullptr ? length + 1u : (count + 1u) * sizeof *starts;
         free(source);
         free(starts);
         return refuse(self, request);
     }
-    size_t at = 0u;
-    for (size_t line = 0u; line < count; ++line) {
+    bytes at = 0u;
+    for (bytes line = 0u; line < count; ++line) {
         starts[line] = at;
         if (lengths[line] != 0u)
             memcpy(source + at, lines[line], lengths[line]);
@@ -202,29 +202,29 @@ TerminalPen SemicolonSyntax_getPen(const SemicolonSyntax *self, SyntaxRole role)
                                                      : (*self).pens[role];
 }
 
-TerminalPen SemicolonSyntax_penAt(const SemicolonSyntax *self, size_t line, size_t byte) {
+TerminalPen SemicolonSyntax_penAt(const SemicolonSyntax *self, bytes line, bytes byte) {
     if (self == nullptr || line >= (*self).lineCount)
         return TerminalPen();
-    size_t start = (*self).starts[line];
-    size_t end = (*self).starts[line + 1u];
+    bytes start = (*self).starts[line];
+    bytes end = (*self).starts[line + 1u];
     if (byte >= end - start - 1u)
         return (*self).pens[SYNTAX_ROLE_IDENTIFIER];
-    size_t offset = start + byte;
+    bytes offset = start + byte;
     SyntaxRole role = C23Highlights_roleAt((*self).highlights, offset);
     if (!SyntaxRole_isValid(role))
         return (*self).pens[SYNTAX_ROLE_IDENTIFIER];
     return (*self).pens[role];
 }
 
-size_t SemicolonSyntax_getLineCount(const SemicolonSyntax *self) {
+bytes SemicolonSyntax_getLineCount(const SemicolonSyntax *self) {
     return self == nullptr ? 0u : (*self).lineCount;
 }
 
-size_t SemicolonSyntax_getSpanCount(const SemicolonSyntax *self) {
+bytes SemicolonSyntax_getSpanCount(const SemicolonSyntax *self) {
     return self == nullptr ? 0u : C23Highlights_getCount((*self).highlights);
 }
 
-size_t SemicolonSyntax_exhaustionCount(const SemicolonSyntax *self) {
+bytes SemicolonSyntax_exhaustionCount(const SemicolonSyntax *self) {
     return self == nullptr ? 0u : (*self).refusals;
 }
 
@@ -244,7 +244,7 @@ TerminalProjection SemicolonSyntax_toStringStruct(const SemicolonSyntax *self) {
         (void*) (*self).source, (*self).length, (void*) (*self).starts,
         (*self).lineCount, (void*) (*self).highlights,
         C23Highlights_getCount((*self).highlights));
-    for (size_t role = 0u; role <= SYNTAX_ROLE_IDENTIFIER; ++role) {
+    for (bytes role = 0u; role <= SYNTAX_ROLE_IDENTIFIER; ++role) {
         TerminalPen pen = (*self).pens[role];
         TerminalProjection next = TerminalProjection_format(
             "%s%s%zu:{fg=%08x,bg=%08x,style=%u}", projection.text,

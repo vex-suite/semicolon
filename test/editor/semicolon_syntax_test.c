@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-static size_t untilFailure = SIZE_MAX;
-static size_t live;
+static bytes untilFailure = SIZE_MAX;
+static bytes live;
 
 static bool allocationAllowed(void) {
     if (untilFailure == SIZE_MAX)
@@ -18,21 +18,21 @@ static bool allocationAllowed(void) {
     return true;
 }
 
-void *syntax_test_malloc(size_t size) {
+void *syntax_test_malloc(bytes size) {
     void *value = allocationAllowed() ? malloc(size) : nullptr;
     if (value != nullptr)
         ++live;
     return value;
 }
 
-void *syntax_test_calloc(size_t count, size_t size) {
+void *syntax_test_calloc(bytes count, bytes size) {
     void *value = allocationAllowed() ? calloc(count, size) : nullptr;
     if (value != nullptr)
         ++live;
     return value;
 }
 
-void *syntax_test_realloc(void *old, size_t size) {
+void *syntax_test_realloc(void *old, bytes size) {
     if (!allocationAllowed())
         return nullptr;
     bool fresh = old == nullptr;
@@ -55,7 +55,7 @@ static void testRows(void) {
     assert(syntax != nullptr);
     char first[] = "int value = 42; /* open";
     const char *rows[] = {first, "continued */ return \"hello\";", "char c = 'x';"};
-    size_t lengths[] = {strlen(rows[0]), strlen(rows[1]), strlen(rows[2])};
+    bytes lengths[] = {strlen(rows[0]), strlen(rows[1]), strlen(rows[2])};
     assert(SemicolonSyntax_setLines(syntax, rows, lengths, 3u));
     assert(SemicolonSyntax_getLineCount(syntax) == 3u);
     assert(SemicolonSyntax_getSpanCount(syntax) > 10u);
@@ -72,7 +72,7 @@ static void testRows(void) {
     assert(!SemicolonSyntax_setLines(syntax, nullptr, lengths, 3u));
     assert(SemicolonSyntax_getLineCount(syntax) == 3u);
     const char *absent[] = {nullptr};
-    size_t one[] = {1u};
+    bytes one[] = {1u};
     assert(!SemicolonSyntax_setLines(syntax, absent, one, 1u));
     assert(!SemicolonSyntax_setLines(nullptr, rows, lengths, 3u));
     assert(SemicolonSyntax_penAt(syntax, 0u, 0u).fg == 0x008000FFu);
@@ -91,17 +91,17 @@ static void testRows(void) {
     assert(SemicolonSyntax_getLineCount(syntax) == 0u);
     assert(SemicolonSyntax_getSpanCount(syntax) == 0u);
     const char *empty[] = {nullptr};
-    size_t zero[] = {0u};
+    bytes zero[] = {0u};
     assert(SemicolonSyntax_setLines(syntax, empty, zero, 1u));
     assert(SemicolonSyntax_penAt(syntax, 0u, SIZE_MAX).fg == 0xF0F0F0FFu);
     const char *recovery[] = {"bool ready = true; nullptr; { }"};
-    size_t recoveryLengths[] = {strlen(recovery[0])};
+    bytes recoveryLengths[] = {strlen(recovery[0])};
     assert(SemicolonSyntax_setLines(syntax, recovery, recoveryLengths, 1u));
-    size_t brace = (size_t) (strchr(recovery[0], '{') - recovery[0]);
+    bytes brace = (bytes) (strchr(recovery[0], '{') - recovery[0]);
     assert(SemicolonSyntax_penAt(syntax, 0u, brace).style == TERMINAL_STYLE_BOLD);
     const char hostile[] = {'/', '*', ' ', '\xFF', '\0', ' ', '*', '/', ' ', 'i', 'n', 't'};
     const char *hostileRows[] = {hostile, "/* still editing", "unterminated"};
-    size_t hostileLengths[] = {sizeof hostile, 16u, 12u};
+    bytes hostileLengths[] = {sizeof hostile, 16u, 12u};
     assert(SemicolonSyntax_setLines(syntax, hostileRows, hostileLengths, 3u));
     // Invalid bytes remain ordinary foreground, never imaginary error squiggles.
     assert(SemicolonSyntax_penAt(syntax, 0u, 3u).fg == 0xF0F0F0FFu);
@@ -114,20 +114,20 @@ static void testRows(void) {
 static void testRolesAndComments(void) {
     SemicolonSyntax *syntax = SemicolonSyntax();
     assert(syntax != nullptr);
-    char first[] = "uint8_t Console_log(const char *message); THROW(\"x\");";
+    char first[] = "u8 Console_log(const char *message); THROW(\"x\");";
     char second[] = "/** doc */ int x;";
     char third[] = "/* regular */ int y;";
     char fourth[] = "#include <locale.h>";
     char fifth[] = "#define VALUE 1";
     char sixth[] = "#include \"x.h\"";
     const char *rows[] = {first, second, third, fourth, fifth, sixth};
-    size_t lengths[] = {strlen(rows[0]), strlen(rows[1]), strlen(rows[2]),
+    bytes lengths[] = {strlen(rows[0]), strlen(rows[1]), strlen(rows[2]),
                         strlen(rows[3]), strlen(rows[4]), strlen(rows[5])};
     assert(SemicolonSyntax_setLines(syntax, rows, lengths, 6u));
-    size_t type = (size_t) (strstr(first, "uint8_t") - first);
-    size_t function = (size_t) (strstr(first, "Console_log") - first);
-    size_t variable = (size_t) (strstr(first, "message") - first);
-    size_t macro = (size_t) (strstr(first, "THROW") - first);
+    bytes type = (bytes) (strstr(first, "u8") - first);
+    bytes function = (bytes) (strstr(first, "Console_log") - first);
+    bytes variable = (bytes) (strstr(first, "message") - first);
+    bytes macro = (bytes) (strstr(first, "THROW") - first);
     assert(SemicolonSyntax_penAt(syntax, 0u, type).fg == 0x4EC9B0FFu);
     assert(SemicolonSyntax_penAt(syntax, 0u, function).fg == 0x4FC1FFFFu);
     assert(SemicolonSyntax_penAt(syntax, 0u, variable).fg == 0x9CDCFEFFu);
@@ -140,7 +140,7 @@ static void testRolesAndComments(void) {
     assert(directive.fg == 0xDCDCAAFFu);
     assert((directive.style & TERMINAL_STYLE_BOLD) != 0u);
     assert(SemicolonSyntax_penAt(syntax, 3u, 1u).fg == 0xDCDCAAFFu);
-    size_t header = (size_t) (strstr(fourth, "<locale.h>") - fourth);
+    bytes header = (bytes) (strstr(fourth, "<locale.h>") - fourth);
     assert(SemicolonSyntax_penAt(syntax, 3u, header).fg == 0xA0F5A0FFu);
     assert(SemicolonSyntax_penAt(syntax, 3u, header + 1u).fg == 0xA0F5A0FFu);
     assert(SemicolonSyntax_penAt(syntax, 3u, header + strlen("<locale.h>") - 1u).fg
@@ -157,17 +157,17 @@ static void testPressureAndFailure(void) {
     // Cross several growable span-directory boundaries, retaining old data while
     // injecting every bridge allocation failure stage. No host-wide exhaustion.
     char large[8192];
-    size_t length = 0u;
-    for (size_t index = 0u; index < 512u; ++index) {
+    bytes length = 0u;
+    for (bytes index = 0u; index < 512u; ++index) {
         memcpy(large + length, "int x=1;\n", 9u);
         length += 9u;
     }
     const char *rows[] = {large};
-    size_t lengths[] = {length};
+    bytes lengths[] = {length};
     const char *old[] = {"return 1;"};
-    size_t oldLengths[] = {9u};
+    bytes oldLengths[] = {9u};
     bool reachedSuccess = false;
-    for (size_t stage = 0u; stage < 32u; ++stage) {
+    for (bytes stage = 0u; stage < 32u; ++stage) {
         SemicolonSyntax *syntax = SemicolonSyntax_zero();
         assert(syntax != nullptr);
         assert(SemicolonSyntax_setLines(syntax, old, oldLengths, 1u));
@@ -181,7 +181,7 @@ static void testPressureAndFailure(void) {
             assert(SemicolonSyntax_penAt(syntax, 0u, 0u).fg == 0x008000FFu);
             assert(SemicolonSyntax_getSpanCount(syntax) == 3u);
             assert(SemicolonSyntax_exhaustionCount(syntax) == 1u);
-            size_t huge[] = {SIZE_MAX};
+            bytes huge[] = {SIZE_MAX};
             assert(!SemicolonSyntax_setLines(syntax, old, huge, 1u));
             assert(SemicolonSyntax_exhaustionCount(syntax) == 2u);
             assert(!SemicolonSyntax_setLines(syntax, old, oldLengths, SIZE_MAX));

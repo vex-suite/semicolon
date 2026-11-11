@@ -31,14 +31,14 @@ bool SemicolonCode_isMarkdownFile(const char *fileName) {
                                            || strcasecmp(extensionPointer, ".markdown") == 0);
 }
 
-size_t SemicolonCode_lineNumberWidth(size_t lineCount) {
-    size_t widthValue = SEMICOLON_V2_GUTTER_MIN_WIDTH;
-    for (size_t largestNumber = lineCount; largestNumber >= 10u; largestNumber /= 10u)
+bytes SemicolonCode_lineNumberWidth(bytes lineCount) {
+    bytes widthValue = SEMICOLON_V2_GUTTER_MIN_WIDTH;
+    for (bytes largestNumber = lineCount; largestNumber >= 10u; largestNumber /= 10u)
         ++widthValue;
     return widthValue;
 }
 
-size_t SemicolonCode_visibleRows(size_t terminalHeight) {
+bytes SemicolonCode_visibleRows(bytes terminalHeight) {
     return terminalHeight > 2u ? terminalHeight - 2u : 0u;
 }
 
@@ -46,7 +46,7 @@ static void SemicolonCode_freeFileLines(SemicolonState *semicolonState) {
     if (semicolonState == nullptr)
         return;
     if ((*semicolonState).fileLines != nullptr) {
-        for (size_t lineIndex = 0u; lineIndex < (*semicolonState).fileLineCount; ++lineIndex) {
+        for (bytes lineIndex = 0u; lineIndex < (*semicolonState).fileLineCount; ++lineIndex) {
             if ((*semicolonState).fileLines[lineIndex] != nullptr)
                 Memory_free((*semicolonState).fileLines[lineIndex]);
         }
@@ -61,12 +61,12 @@ static void SemicolonCode_freeFileLines(SemicolonState *semicolonState) {
     (*semicolonState).fileLineCapacity = 0u;
 }
 
-static bool SemicolonCode_addLine(SemicolonState *semicolonState, const char *lineText, size_t lineLength) {
+static bool SemicolonCode_addLine(SemicolonState *semicolonState, const char *lineText, bytes lineLength) {
     if ((*semicolonState).fileLineCount == (*semicolonState).fileLineCapacity) {
-        size_t nextCapacity = (*semicolonState).fileLineCapacity == 0u ? 256u
+        bytes nextCapacity = (*semicolonState).fileLineCapacity == 0u ? 256u
                                                                        : (*semicolonState).fileLineCapacity * 2u;
         char **grownLines = (char**) Memory_alloc(TYPE_BYTE_ARRAY, nextCapacity * sizeof(char*));
-        size_t *grownLengths = (size_t*) Memory_alloc(TYPE_BYTE_ARRAY, nextCapacity * sizeof(size_t));
+        bytes *grownLengths = (bytes*) Memory_alloc(TYPE_BYTE_ARRAY, nextCapacity * sizeof(bytes));
         if (grownLines == nullptr || grownLengths == nullptr) {
             if (grownLines != nullptr)
                 Memory_free(grownLines);
@@ -76,7 +76,7 @@ static bool SemicolonCode_addLine(SemicolonState *semicolonState, const char *li
         }
         if ((*semicolonState).fileLineCount > 0u) {
             memcpy(grownLines, (*semicolonState).fileLines, (*semicolonState).fileLineCount * sizeof(char*));
-            memcpy(grownLengths, (*semicolonState).fileLineLengths, (*semicolonState).fileLineCount * sizeof(size_t));
+            memcpy(grownLengths, (*semicolonState).fileLineLengths, (*semicolonState).fileLineCount * sizeof(bytes));
             Memory_free((*semicolonState).fileLines);
             Memory_free((*semicolonState).fileLineLengths);
         }
@@ -118,8 +118,8 @@ bool SemicolonCode_loadFile(SemicolonState *semicolonState, const char *filePath
 
     char readBuffer[4096];
     char *accumulatedBytes = nullptr;
-    size_t totalBytes = 0u;
-    size_t readChunk = 0u;
+    bytes totalBytes = 0u;
+    bytes readChunk = 0u;
     while ((readChunk = fread(readBuffer, 1u, sizeof readBuffer, filePointer)) > 0u) {
         char *grownBytes = (char*) Memory_alloc(TYPE_BYTE_ARRAY, totalBytes + readChunk + 1u);
         if (grownBytes == nullptr) {
@@ -140,11 +140,11 @@ bool SemicolonCode_loadFile(SemicolonState *semicolonState, const char *filePath
     (void) fclose(filePointer);
 
     if (totalBytes > 0u && accumulatedBytes != nullptr) {
-        size_t lineStartIndex = 0u;
-        for (size_t byteIndex = 0u; byteIndex <= totalBytes; ++byteIndex) {
+        bytes lineStartIndex = 0u;
+        for (bytes byteIndex = 0u; byteIndex <= totalBytes; ++byteIndex) {
             if (byteIndex != totalBytes && accumulatedBytes[byteIndex] != '\n')
                 continue;
-            size_t lineEndIndex = byteIndex;
+            bytes lineEndIndex = byteIndex;
             if (byteIndex < totalBytes && lineEndIndex > lineStartIndex && accumulatedBytes[lineEndIndex - 1u] == '\r')
                 --lineEndIndex;
             if (!SemicolonCode_addLine(semicolonState, accumulatedBytes + lineStartIndex, lineEndIndex - lineStartIndex)) {
@@ -203,12 +203,12 @@ bool SemicolonCode_loadFile(SemicolonState *semicolonState, const char *filePath
     return true;
 }
 
-void SemicolonCode_syncVisibleRows(SemicolonState *semicolonState, size_t firstLineIndex,
-                                   size_t leftColumnIndex, size_t visibleRowCount) {
+void SemicolonCode_syncVisibleRows(SemicolonState *semicolonState, bytes firstLineIndex,
+                                   bytes leftColumnIndex, bytes visibleRowCount) {
     if (semicolonState == nullptr)
         return;
 
-    for (size_t rowIndex = 0u; rowIndex < (*semicolonState).codeRowCount; ++rowIndex) {
+    for (bytes rowIndex = 0u; rowIndex < (*semicolonState).codeRowCount; ++rowIndex) {
         TerminalText *gutterTextView = (*semicolonState).gutterRowTexts[rowIndex];
         TerminalText *codeTextView = (*semicolonState).codeRowTexts[rowIndex];
         if (gutterTextView == nullptr || codeTextView == nullptr)
@@ -220,7 +220,7 @@ void SemicolonCode_syncVisibleRows(SemicolonState *semicolonState, size_t firstL
             continue;
         }
 
-        size_t currentLineIndex = firstLineIndex + rowIndex;
+        bytes currentLineIndex = firstLineIndex + rowIndex;
         if (rowIndex >= visibleRowCount || currentLineIndex >= (*semicolonState).fileLineCount) {
             (void) TerminalText_setText(gutterTextView, "", 0u);
             (void) TerminalText_setText(codeTextView, "", 0u);
@@ -233,48 +233,48 @@ void SemicolonCode_syncVisibleRows(SemicolonState *semicolonState, size_t firstL
         if (writtenGutter < 0)
             writtenGutter = 0;
 
-        (void) TerminalText_setText(gutterTextView, (*semicolonState).gutterRowBuffers[rowIndex], (size_t) writtenGutter);
+        (void) TerminalText_setText(gutterTextView, (*semicolonState).gutterRowBuffers[rowIndex], (bytes) writtenGutter);
 
         const char *lineBytes = (*semicolonState).fileLines[currentLineIndex];
-        size_t lineLength = (*semicolonState).fileLineLengths[currentLineIndex];
-        size_t skipBytes = SemicolonUtil_bytesForCells(lineBytes, lineLength, leftColumnIndex);
+        bytes lineLength = (*semicolonState).fileLineLengths[currentLineIndex];
+        bytes skipBytes = SemicolonUtil_bytesForCells(lineBytes, lineLength, leftColumnIndex);
         (void) TerminalText_setText(codeTextView, lineBytes + skipBytes, lineLength - skipBytes);
     }
 }
 
 void SemicolonCode_paintSyntax(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas,
-                               size_t firstLineIndex, size_t leftColumnIndex) {
+                               bytes firstLineIndex, bytes leftColumnIndex) {
     if (semicolonState == nullptr || terminalCanvas == nullptr
         || !(*semicolonState).isSyntaxCurrent || (*semicolonState).syntaxHighlighter == nullptr
         || ((*semicolonState).isMarkdownFile && (*semicolonState).isMarkdownPreview))
         return;
 
-    size_t firstRowY = 1u;
-    size_t railOffset = (*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth + 1u : 0u;
-    size_t codeLeftX = railOffset + ((*semicolonState).lineNumberWidth + 3u) + 2u;
-    size_t canvasWidth = TerminalCanvas_getWidth(terminalCanvas);
-    size_t canvasHeight = TerminalCanvas_getHeight(terminalCanvas);
+    bytes firstRowY = 1u;
+    bytes railOffset = (*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth + 1u : 0u;
+    bytes codeLeftX = railOffset + ((*semicolonState).lineNumberWidth + 3u) + 2u;
+    bytes canvasWidth = TerminalCanvas_getWidth(terminalCanvas);
+    bytes canvasHeight = TerminalCanvas_getHeight(terminalCanvas);
     if (codeLeftX >= canvasWidth || firstRowY >= canvasHeight)
         return;
 
-    size_t visibleRowCount = SemicolonCode_visibleRows(canvasHeight);
+    bytes visibleRowCount = SemicolonCode_visibleRows(canvasHeight);
     if (visibleRowCount > (*semicolonState).codeRowCount)
         visibleRowCount = (*semicolonState).codeRowCount;
 
-    for (size_t rowIndex = 0u; rowIndex < visibleRowCount && firstLineIndex + rowIndex < (*semicolonState).fileLineCount; ++rowIndex) {
-        size_t currentLineIndex = firstLineIndex + rowIndex;
+    for (bytes rowIndex = 0u; rowIndex < visibleRowCount && firstLineIndex + rowIndex < (*semicolonState).fileLineCount; ++rowIndex) {
+        bytes currentLineIndex = firstLineIndex + rowIndex;
         const char *lineText = (*semicolonState).fileLines[currentLineIndex];
-        size_t lineLength = (*semicolonState).fileLineLengths[currentLineIndex];
-        size_t byteOffset = SemicolonUtil_bytesForCells(lineText, lineLength, leftColumnIndex);
-        size_t currentPixelX = codeLeftX;
+        bytes lineLength = (*semicolonState).fileLineLengths[currentLineIndex];
+        bytes byteOffset = SemicolonUtil_bytesForCells(lineText, lineLength, leftColumnIndex);
+        bytes currentPixelX = codeLeftX;
 
         while (byteOffset < lineLength && currentPixelX < canvasWidth) {
             TerminalCanvasDecodedScalar decoded = TerminalCanvas_utf8Decode(lineText + byteOffset, lineLength - byteOffset);
-            size_t cellWidth = decoded.bytes == 0u ? 1u : TerminalCanvas_widthOf(decoded.codepoint);
+            bytes cellWidth = decoded.bytes == 0u ? 1u : TerminalCanvas_widthOf(decoded.codepoint);
             TerminalPen syntaxPen = SemicolonSyntax_penAt((*semicolonState).syntaxHighlighter, currentLineIndex, byteOffset);
 
-            for (size_t cellIndex = 0u; cellIndex < cellWidth && currentPixelX + cellIndex < canvasWidth; ++cellIndex) {
-                size_t gridIndex = ((*terminalCanvas).y + firstRowY + rowIndex) * (*terminalCanvas).gridWidth
+            for (bytes cellIndex = 0u; cellIndex < cellWidth && currentPixelX + cellIndex < canvasWidth; ++cellIndex) {
+                bytes gridIndex = ((*terminalCanvas).y + firstRowY + rowIndex) * (*terminalCanvas).gridWidth
                                  + (*terminalCanvas).x + currentPixelX + cellIndex;
                 if ((*terminalCanvas).fg != nullptr)
                     (*terminalCanvas).fg[gridIndex] = syntaxPen.fg;
@@ -298,15 +298,15 @@ void SemicolonCode_paintMarkdownPreview(SemicolonState *semicolonState, Terminal
         || !(*semicolonState).isMarkdownPreview || (*semicolonState).markdownView == nullptr)
         return;
 
-    size_t canvasWidth = TerminalCanvas_getWidth(terminalCanvas);
-    size_t canvasHeight = TerminalCanvas_getHeight(terminalCanvas);
-    size_t contentX = ((*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth : 0u) + 3u;
-    size_t contentY = 1u + 3u;
+    bytes canvasWidth = TerminalCanvas_getWidth(terminalCanvas);
+    bytes canvasHeight = TerminalCanvas_getHeight(terminalCanvas);
+    bytes contentX = ((*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth : 0u) + 3u;
+    bytes contentY = 1u + 3u;
     if (contentX >= canvasWidth || contentY >= canvasHeight || canvasHeight - contentY < 2u)
         return;
 
-    size_t contentWidth = canvasWidth - contentX;
-    size_t contentHeight = canvasHeight - contentY - 1u;
+    bytes contentWidth = canvasWidth - contentX;
+    bytes contentHeight = canvasHeight - contentY - 1u;
     TerminalCanvas contentCanvas = TerminalCanvas_sub(terminalCanvas, contentX, contentY, contentWidth, contentHeight);
 
     if (!TerminalMarkdownView_setViewport((*semicolonState).markdownView, contentWidth))
@@ -317,29 +317,29 @@ void SemicolonCode_paintMarkdownPreview(SemicolonState *semicolonState, Terminal
 }
 
 void SemicolonCode_paintCursor(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas,
-                               size_t firstLineIndex, size_t leftColumnIndex) {
+                               bytes firstLineIndex, bytes leftColumnIndex) {
     if (semicolonState == nullptr || terminalCanvas == nullptr || !(*semicolonState).isCursorVisible
         || ((*semicolonState).isMarkdownFile && (*semicolonState).isMarkdownPreview))
         return;
     if ((*semicolonState).cursorLineIndex < firstLineIndex)
         return;
 
-    size_t relativeLineY = (*semicolonState).cursorLineIndex - firstLineIndex;
+    bytes relativeLineY = (*semicolonState).cursorLineIndex - firstLineIndex;
     if (relativeLineY >= SemicolonCode_visibleRows(TerminalCanvas_getHeight(terminalCanvas)))
         return;
 
     const char *lineBytes = (*semicolonState).fileLines[(*semicolonState).cursorLineIndex];
-    size_t cursorCells = SemicolonUtil_cellsOf(lineBytes, (*semicolonState).cursorByteOffset);
+    bytes cursorCells = SemicolonUtil_cellsOf(lineBytes, (*semicolonState).cursorByteOffset);
     if (cursorCells < leftColumnIndex)
         return;
 
-    size_t railOffset = (*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth + 1u : 0u;
-    size_t codeLeftX = railOffset + ((*semicolonState).lineNumberWidth + 3u) + 2u;
-    size_t cursorPixelX = codeLeftX + (cursorCells - leftColumnIndex);
-    size_t cursorPixelY = 1u + relativeLineY;
+    bytes railOffset = (*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth + 1u : 0u;
+    bytes codeLeftX = railOffset + ((*semicolonState).lineNumberWidth + 3u) + 2u;
+    bytes cursorPixelX = codeLeftX + (cursorCells - leftColumnIndex);
+    bytes cursorPixelY = 1u + relativeLineY;
 
     if (cursorPixelX < TerminalCanvas_getWidth(terminalCanvas) && cursorPixelY < TerminalCanvas_getHeight(terminalCanvas)) {
-        size_t gridIndex = ((*terminalCanvas).y + cursorPixelY) * (*terminalCanvas).gridWidth
+        bytes gridIndex = ((*terminalCanvas).y + cursorPixelY) * (*terminalCanvas).gridWidth
                          + (*terminalCanvas).x + cursorPixelX;
         if ((*terminalCanvas).styles != nullptr)
             (*terminalCanvas).styles[gridIndex] |= TERMINAL_STYLE_REVERSE;
@@ -375,7 +375,7 @@ TerminalPanel *createCodePanel(SemicolonState *semicolonState) {
         return nullptr;
     }
 
-    for (size_t rowIndex = 0u; rowIndex < SEMICOLON_V2_MAX_ROWS; ++rowIndex) {
+    for (bytes rowIndex = 0u; rowIndex < SEMICOLON_V2_MAX_ROWS; ++rowIndex) {
         TerminalText *numberTextView = TerminalText("");
         TerminalText *lineTextView = TerminalText("");
         if (numberTextView == nullptr || lineTextView == nullptr
@@ -444,7 +444,7 @@ TerminalPanel *createCodePanel(SemicolonState *semicolonState) {
     TerminalText *gapTextView = TerminalText("  ");
     (void) TerminalText_setForegroundColor(gapTextView, SEMICOLON_V2_TEXT);
 
-    size_t gutterWidth = (*semicolonState).lineNumberWidth + 3u;
+    bytes gutterWidth = (*semicolonState).lineNumberWidth + 3u;
     (*semicolonState).gutterChildId = TerminalPanel_addPanel(
         editorPanel, gutterPanel, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_LEFT, gutterWidth));
     (void) TerminalPanel_addText(editorPanel, gapTextView, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_LEFT, 2u));
@@ -486,10 +486,10 @@ bool SemicolonCode_setMarkdownMode(SemicolonState *semicolonState, bool isPrevie
     return true;
 }
 
-bool SemicolonCode_handleActionClick(SemicolonState *semicolonState, size_t clickX, size_t clickY) {
+bool SemicolonCode_handleActionClick(SemicolonState *semicolonState, bytes clickX, bytes clickY) {
     if (semicolonState == nullptr)
         return false;
-    size_t totalWidth = (*semicolonState).terminalWidth;
+    bytes totalWidth = (*semicolonState).terminalWidth;
     if (totalWidth == 0u)
         return false;
     if (clickY == 1u) {
@@ -498,8 +498,8 @@ bool SemicolonCode_handleActionClick(SemicolonState *semicolonState, size_t clic
         }
     }
     if (clickY == 2u && (*semicolonState).isMarkdownFile) {
-        size_t previewStart = totalWidth >= 11u ? totalWidth - 11u : 0u;
-        size_t codeStart = totalWidth >= 20u ? totalWidth - 20u : 0u;
+        bytes previewStart = totalWidth >= 11u ? totalWidth - 11u : 0u;
+        bytes codeStart = totalWidth >= 20u ? totalWidth - 20u : 0u;
         if (clickX >= codeStart && clickX < previewStart) {
             return SemicolonCode_setMarkdownMode(semicolonState, false);
         }

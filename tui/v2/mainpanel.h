@@ -11,10 +11,10 @@
 
 TerminalPanel *createMainPanel(SemicolonState *semicolonState);
 TerminalPanel *createHeaderPanel(SemicolonState *semicolonState);
-void SemicolonMainPanel_setRailWidth(SemicolonState *semicolonState, size_t newRailWidth);
+void SemicolonMainPanel_setRailWidth(SemicolonState *semicolonState, bytes newRailWidth);
 void SemicolonMainPanel_setRailVisible(SemicolonState *semicolonState, bool isVisible);
 void SemicolonMainPanel_paintSplitter(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas, bool isHovered);
 void SemicolonHeader_syncTabs(SemicolonState *semicolonState);
-bool SemicolonHeader_handleTabClick(SemicolonState *semicolonState, size_t clickX, TerminalPointerButton pointerButton);
+bool SemicolonHeader_handleTabClick(SemicolonState *semicolonState, bytes clickX, TerminalPointerButton pointerButton);
 
 #endif

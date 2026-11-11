@@ -41,9 +41,9 @@ reference characters:
 ```
 light     ─  │
 heavy      ━ ┃
-double     ═ ║
+d64     ═ ║
 dashed     ┄ ┅ ┆ ┇ ┈ ┉ ┊ ┋
-double-dash ╌ ╍ ╎ ╏
+d64-dash ╌ ╍ ╎ ╏
 rounded    ╭ ╮ ╰ ╯
 ```
 
@@ -52,7 +52,7 @@ rounded    ╭ ╮ ╰ ╯
 ```
 light      ┌ ┐ └ ┘
 heavy      ┏ ┓ ┗ ┛
-double     ╔ ╗ ╚ ╝
+d64     ╔ ╗ ╚ ╝
 mixed      ╒ ╓ ╕ ╖ ╘ ╙ ╛ ╜
 ```
 
@@ -61,7 +61,7 @@ mixed      ╒ ╓ ╕ ╖ ╘ ╙ ╛ ╜
 ```
 light      ├ ┤ ┬ ┴ ┼
 heavy      ┣ ┫ ┳ ┻ ╋
-double     ╠ ╣ ╦ ╩ ╬
+d64     ╠ ╣ ╦ ╩ ╬
 mixed      ╞ ╟ ╡ ╢ ╤ ╥ ╧ ╨ ╪ ╫
 ```
 
@@ -138,7 +138,7 @@ degrees  ° ′ ″ ℃ ℉
 ```
 light      + - | =
 heavy      # # | #
-double     + = | =
+d64     + = | =
 vertical   | : ¦ ‖
 arrows     <- -> ^ v <->
 bullets    * o . :

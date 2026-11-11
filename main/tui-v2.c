@@ -10,7 +10,7 @@
 #include "ui/surface/terminal_surface.h"
 #include "events/terminal_input.h"
 #include "format/terminal_style.h"
-#include "io/clipboard.h"
+#include "../../re/clipboard/clipboard.h"
 #include "system/browser.h"
 #include "nio/mem.h"
 #include "oop/type.h"
@@ -47,17 +47,17 @@
 #define SEMICOLON_V2_MAX_GRID_HEIGHT 80u
 #define SEMICOLON_V2_MAX_CELL_COUNT (SEMICOLON_V2_MAX_GRID_WIDTH * SEMICOLON_V2_MAX_GRID_HEIGHT)
 
-static uint32_t gBackBufferCells[SEMICOLON_V2_MAX_CELL_COUNT];
-static uint16_t gBackBufferStyles[SEMICOLON_V2_MAX_CELL_COUNT];
-static uint32_t gBackBufferForeground[SEMICOLON_V2_MAX_CELL_COUNT];
-static uint32_t gBackBufferBackground[SEMICOLON_V2_MAX_CELL_COUNT];
+static u32 gBackBufferCells[SEMICOLON_V2_MAX_CELL_COUNT];
+static u16 gBackBufferStyles[SEMICOLON_V2_MAX_CELL_COUNT];
+static u32 gBackBufferForeground[SEMICOLON_V2_MAX_CELL_COUNT];
+static u32 gBackBufferBackground[SEMICOLON_V2_MAX_CELL_COUNT];
 
-static uint32_t gFrontBufferCells[SEMICOLON_V2_MAX_CELL_COUNT];
-static uint16_t gFrontBufferStyles[SEMICOLON_V2_MAX_CELL_COUNT];
-static uint32_t gFrontBufferForeground[SEMICOLON_V2_MAX_CELL_COUNT];
-static uint32_t gFrontBufferBackground[SEMICOLON_V2_MAX_CELL_COUNT];
+static u32 gFrontBufferCells[SEMICOLON_V2_MAX_CELL_COUNT];
+static u16 gFrontBufferStyles[SEMICOLON_V2_MAX_CELL_COUNT];
+static u32 gFrontBufferForeground[SEMICOLON_V2_MAX_CELL_COUNT];
+static u32 gFrontBufferBackground[SEMICOLON_V2_MAX_CELL_COUNT];
 
-static int SemicolonV2_colorIndex(uint32_t colorValue) {
+static int SemicolonV2_colorIndex(u32 colorValue) {
     static const int colorLevels[] = { 0, 95, 135, 175, 215, 255 };
     int redChannel = TERMINAL_COLOR_RED(colorValue);
     int greenChannel = TERMINAL_COLOR_GREEN(colorValue);
@@ -85,21 +85,21 @@ static int SemicolonV2_colorIndex(uint32_t colorValue) {
     return grayDistance < cubeDistance ? grayIndex : cubeIndex;
 }
 
-static short SemicolonV2_colorPair(uint32_t foregroundColor, uint32_t backgroundColor) {
-    static uint32_t cachedKeysForeground[64];
-    static uint32_t cachedKeysBackground[64];
+static short SemicolonV2_colorPair(u32 foregroundColor, u32 backgroundColor) {
+    static u32 cachedKeysForeground[64];
+    static u32 cachedKeysBackground[64];
     static short cachedValuesPair[64];
-    static size_t cachedPairCount = 0u;
+    static bytes cachedPairCount = 0u;
 
-    uint32_t effectiveFg = TERMINAL_COLOR_IS_SET(foregroundColor) ? foregroundColor : 0u;
-    uint32_t effectiveBg = TERMINAL_COLOR_IS_SET(backgroundColor) ? backgroundColor : 0u;
+    u32 effectiveFg = TERMINAL_COLOR_IS_SET(foregroundColor) ? foregroundColor : 0u;
+    u32 effectiveBg = TERMINAL_COLOR_IS_SET(backgroundColor) ? backgroundColor : 0u;
 
-    for (size_t cacheIndex = 0u; cacheIndex < cachedPairCount; ++cacheIndex) {
+    for (bytes cacheIndex = 0u; cacheIndex < cachedPairCount; ++cacheIndex) {
         if (cachedKeysForeground[cacheIndex] == effectiveFg && cachedKeysBackground[cacheIndex] == effectiveBg)
             return cachedValuesPair[cacheIndex];
     }
 
-    if (cachedPairCount >= 64u || cachedPairCount + 1u >= (size_t) COLOR_PAIRS)
+    if (cachedPairCount >= 64u || cachedPairCount + 1u >= (bytes) COLOR_PAIRS)
         return 0;
 
     short allocatedPair = (short) (cachedPairCount + 1u);
@@ -116,7 +116,7 @@ static short SemicolonV2_colorPair(uint32_t foregroundColor, uint32_t background
     return allocatedPair;
 }
 
-static attr_t SemicolonV2_terminalAttributes(uint16_t styleFlags) {
+static attr_t SemicolonV2_terminalAttributes(u16 styleFlags) {
     attr_t resultAttributes = A_NORMAL;
     if ((styleFlags & TERMINAL_STYLE_BOLD) != 0u || (styleFlags & TERMINAL_STYLE_ACCENT) != 0u)
         resultAttributes |= A_BOLD;
@@ -138,22 +138,22 @@ static bool SemicolonV2_presentRun(void *callbackContext, TerminalRun terminalRu
         || terminalRun.y >= SEMICOLON_V2_MAX_GRID_HEIGHT)
         return false;
 
-    for (size_t cellIndex = 0u; cellIndex < terminalRun.length; ++cellIndex) {
-        uint32_t codepointValue = terminalRun.cells[cellIndex];
+    for (bytes cellIndex = 0u; cellIndex < terminalRun.length; ++cellIndex) {
+        u32 codepointValue = terminalRun.cells[cellIndex];
         if (codepointValue == 0u)
             continue;
         wchar_t glyphWideString[2] = { (wchar_t) codepointValue, L'\0' };
         cchar_t compositeCell;
-        uint16_t styleBits = terminalRun.styles == nullptr ? TERMINAL_STYLE_NONE : terminalRun.styles[cellIndex];
-        uint32_t foregroundRgb = terminalRun.fg == nullptr ? TERMINAL_COLOR_DEFAULT : terminalRun.fg[cellIndex];
-        uint32_t backgroundRgb = terminalRun.bg == nullptr ? TERMINAL_COLOR_DEFAULT : terminalRun.bg[cellIndex];
+        u16 styleBits = terminalRun.styles == nullptr ? TERMINAL_STYLE_NONE : terminalRun.styles[cellIndex];
+        u32 foregroundRgb = terminalRun.fg == nullptr ? TERMINAL_COLOR_DEFAULT : terminalRun.fg[cellIndex];
+        u32 backgroundRgb = terminalRun.bg == nullptr ? TERMINAL_COLOR_DEFAULT : terminalRun.bg[cellIndex];
 
         // Alpha blend background over device backdrop so translucent selection highlights stay soft and dark
-        uint32_t compositedBg = TERMINAL_COLOR_IS_SET(backgroundRgb)
+        u32 compositedBg = TERMINAL_COLOR_IS_SET(backgroundRgb)
             ? TerminalColor_over(backgroundRgb, SEMICOLON_V2_DEVICE_BG)
             : TERMINAL_COLOR_DEFAULT;
-        uint32_t backdropColor = (compositedBg != TERMINAL_COLOR_DEFAULT) ? compositedBg : SEMICOLON_V2_DEVICE_BG;
-        uint32_t compositedFg = TERMINAL_COLOR_IS_SET(foregroundRgb)
+        u32 backdropColor = (compositedBg != TERMINAL_COLOR_DEFAULT) ? compositedBg : SEMICOLON_V2_DEVICE_BG;
+        u32 compositedFg = TERMINAL_COLOR_IS_SET(foregroundRgb)
             ? TerminalColor_over(foregroundRgb, backdropColor)
             : TERMINAL_COLOR_DEFAULT;
 
@@ -164,8 +164,8 @@ static bool SemicolonV2_presentRun(void *callbackContext, TerminalRun terminalRu
             return false;
 
         int writeStatus = mvadd_wch((int) terminalRun.y, (int) (terminalRun.x + cellIndex), &compositeCell);
-        bool isTerminalBottomRight = terminalRun.y == (size_t) (LINES - 1)
-                                   && terminalRun.x + cellIndex == (size_t) (COLS - 1);
+        bool isTerminalBottomRight = terminalRun.y == (bytes) (LINES - 1)
+                                   && terminalRun.x + cellIndex == (bytes) (COLS - 1);
         if (writeStatus == ERR && !isTerminalBottomRight)
             return false;
     }
@@ -185,11 +185,11 @@ static void SemicolonV2_frameBracket(void *callbackContext, TerminalPresentPhase
 #define TUI_MOUSE_X10 (KEY_MAX + 2)
 #define TUI_MOUSE_SUFFIX_MS 25
 
-static uint64_t SemicolonV2_monotonicNowNs(void) {
+static u64 SemicolonV2_monotonicNowNs(void) {
     struct timespec currentTime;
     if (clock_gettime(CLOCK_MONOTONIC, &currentTime) != 0)
         return 0u;
-    return (uint64_t) currentTime.tv_sec * 1000000000ULL + (uint64_t) currentTime.tv_nsec;
+    return (u64) currentTime.tv_sec * 1000000000ULL + (u64) currentTime.tv_nsec;
 }
 
 static bool SemicolonV2_setMouseReporting(bool isEnabled) {
@@ -201,12 +201,12 @@ static bool SemicolonV2_readMouseSuffix(TerminalInput *terminalInput, bool isSgr
     static const char *sgrPrefix = "\x1b[<";
     static const char *x10Prefix = "\x1b[M";
     const char *prefixString = isSgrMode ? sgrPrefix : x10Prefix;
-    for (size_t byteIndex = 0u; prefixString[byteIndex] != '\0'; ++byteIndex)
+    for (bytes byteIndex = 0u; prefixString[byteIndex] != '\0'; ++byteIndex)
         (void) TerminalInput_feed(terminalInput, (unsigned char) prefixString[byteIndex]);
 
     timeout(TUI_MOUSE_SUFFIX_MS);
     bool isReady = false;
-    for (size_t readIndex = 0u; readIndex < 24u; ++readIndex) {
+    for (bytes readIndex = 0u; readIndex < 24u; ++readIndex) {
         int readByte = getch();
         if (readByte == ERR)
             break;
@@ -231,18 +231,18 @@ static bool SemicolonV2_renderInteractiveFrame(SemicolonState *semicolonState, T
         || terminalLines > (int) SEMICOLON_V2_MAX_GRID_HEIGHT)
         return false;
 
-    SemicolonState_setTerminalDimensions(semicolonState, (size_t) terminalColumns, (size_t) terminalLines);
+    SemicolonState_setTerminalDimensions(semicolonState, (bytes) terminalColumns, (bytes) terminalLines);
 
-    size_t visibleRailRows = SemicolonRail_visibleRows((size_t) terminalLines);
-    size_t visibleCodeRows = SemicolonCode_visibleRows((size_t) terminalLines);
-    size_t currentScrollTop = SemicolonState_getScrollTop(semicolonState);
-    size_t currentScrollLeft = SemicolonState_getScrollLeft(semicolonState);
+    bytes visibleRailRows = SemicolonRail_visibleRows((bytes) terminalLines);
+    bytes visibleCodeRows = SemicolonCode_visibleRows((bytes) terminalLines);
+    bytes currentScrollTop = SemicolonState_getScrollTop(semicolonState);
+    bytes currentScrollLeft = SemicolonState_getScrollLeft(semicolonState);
 
     SemicolonRail_syncVisibleRows(semicolonState, visibleRailRows);
     SemicolonCode_syncVisibleRows(semicolonState, currentScrollTop, currentScrollLeft, visibleCodeRows);
     SemicolonFooter_updateClock(semicolonState);
 
-    size_t totalCells = (size_t) terminalColumns * (size_t) terminalLines;
+    bytes totalCells = (bytes) terminalColumns * (bytes) terminalLines;
     memset(gFrontBufferCells, 0, totalCells * sizeof gFrontBufferCells[0]);
     memset(gFrontBufferStyles, 0, totalCells * sizeof gFrontBufferStyles[0]);
     memset(gFrontBufferForeground, 0, totalCells * sizeof gFrontBufferForeground[0]);
@@ -250,10 +250,10 @@ static bool SemicolonV2_renderInteractiveFrame(SemicolonState *semicolonState, T
 
     TerminalCanvas backCanvas = TerminalCanvas(gBackBufferCells, gBackBufferStyles,
                                                gBackBufferForeground, gBackBufferBackground,
-                                               (size_t) terminalColumns, (size_t) terminalLines);
+                                               (bytes) terminalColumns, (bytes) terminalLines);
     TerminalCanvas frontCanvas = TerminalCanvas(gFrontBufferCells, gFrontBufferStyles,
                                                 gFrontBufferForeground, gFrontBufferBackground,
-                                                (size_t) terminalColumns, (size_t) terminalLines);
+                                                (bytes) terminalColumns, (bytes) terminalLines);
     TerminalCanvas_fill(&backCanvas, ' ', TerminalPen());
 
     TerminalPanel_paint(rootPanel, &backCanvas);
@@ -273,7 +273,7 @@ static bool SemicolonV2_renderInteractiveFrame(SemicolonState *semicolonState, T
     return presentResult.ok;
 }
 
-static bool SemicolonV2_firstFileIn(const char *rootDirectory, char *destinationBuffer, size_t destinationCapacity) {
+static bool SemicolonV2_firstFileIn(const char *rootDirectory, char *destinationBuffer, bytes destinationCapacity) {
     DIR *dirHandle = opendir(rootDirectory);
     if (dirHandle == nullptr)
         return false;
@@ -298,26 +298,26 @@ static bool SemicolonV2_firstFileIn(const char *rootDirectory, char *destination
     return true;
 }
 
-static bool SemicolonV2_parseHexColor(const char *hexString, uint32_t *outColor) {
+static bool SemicolonV2_parseHexColor(const char *hexString, u32 *outColor) {
     if (hexString == nullptr || *hexString == '\0')
         return false;
     if (*hexString == '#')
         ++hexString;
-    size_t stringLength = strlen(hexString);
+    bytes stringLength = strlen(hexString);
     if (stringLength != 6u && stringLength != 8u)
         return false;
 
     unsigned long parsedValue = strtoul(hexString, nullptr, 16);
     if (stringLength == 6u) {
-        uint8_t redByte = (uint8_t) ((parsedValue >> 16u) & 0xFFu);
-        uint8_t greenByte = (uint8_t) ((parsedValue >> 8u) & 0xFFu);
-        uint8_t blueByte = (uint8_t) (parsedValue & 0xFFu);
+        u8 redByte = (u8) ((parsedValue >> 16u) & 0xFFu);
+        u8 greenByte = (u8) ((parsedValue >> 8u) & 0xFFu);
+        u8 blueByte = (u8) (parsedValue & 0xFFu);
         *outColor = TERMINAL_RGB(redByte, greenByte, blueByte);
     } else {
-        uint8_t redByte = (uint8_t) ((parsedValue >> 24u) & 0xFFu);
-        uint8_t greenByte = (uint8_t) ((parsedValue >> 16u) & 0xFFu);
-        uint8_t blueByte = (uint8_t) ((parsedValue >> 8u) & 0xFFu);
-        uint8_t alphaByte = (uint8_t) (parsedValue & 0xFFu);
+        u8 redByte = (u8) ((parsedValue >> 24u) & 0xFFu);
+        u8 greenByte = (u8) ((parsedValue >> 16u) & 0xFFu);
+        u8 blueByte = (u8) ((parsedValue >> 8u) & 0xFFu);
+        u8 alphaByte = (u8) (parsedValue & 0xFFu);
         *outColor = TERMINAL_RGBA(redByte, greenByte, blueByte, alphaByte);
     }
     return true;
@@ -328,15 +328,15 @@ int main(int argumentCount, char **argumentVector) {
 
     bool isDumpModeRequested = false;
     bool isFileExplicitlyGiven = false;
-    size_t requestedDumpWidth = 103u;
-    size_t requestedDumpHeight = 23u;
+    bytes requestedDumpWidth = 103u;
+    bytes requestedDumpHeight = 23u;
     char targetRootDirectory[SEMICOLON_V2_MAX_PATH];
     char targetFilePath[SEMICOLON_V2_MAX_PATH];
     targetRootDirectory[0] = '\0';
     targetFilePath[0] = '\0';
 
     bool isNerdIconsConfigured = true;
-    uint32_t parsedAccentColor = SEMICOLON_V2_ACCENT;
+    u32 parsedAccentColor = SEMICOLON_V2_ACCENT;
 
     for (int argumentIndex = 1; argumentIndex < argumentCount; ++argumentIndex) {
         const char *currentArgument = argumentVector[argumentIndex];
@@ -358,8 +358,8 @@ int main(int argumentCount, char **argumentVector) {
                 char *heightEndPointer = nullptr;
                 long parsedHeight = widthEndPointer != nullptr ? strtol(widthEndPointer + 1, &heightEndPointer, 10) : 0;
                 if (parsedWidth > 0 && parsedHeight > 0) {
-                    requestedDumpWidth = (size_t) parsedWidth;
-                    requestedDumpHeight = (size_t) parsedHeight;
+                    requestedDumpWidth = (bytes) parsedWidth;
+                    requestedDumpHeight = (bytes) parsedHeight;
                 }
             }
             continue;
@@ -422,7 +422,7 @@ int main(int argumentCount, char **argumentVector) {
 
     char locationPathBuffer[SEMICOLON_V2_MAX_PATH];
     const char *userHomeDirectory = getenv("HOME");
-    size_t homeLength = userHomeDirectory != nullptr ? strlen(userHomeDirectory) : 0u;
+    bytes homeLength = userHomeDirectory != nullptr ? strlen(userHomeDirectory) : 0u;
     if (homeLength > 0u && strncmp(targetRootDirectory, userHomeDirectory, homeLength) == 0
         && (targetRootDirectory[homeLength] == '/' || targetRootDirectory[homeLength] == '\0')) {
         (void) snprintf(locationPathBuffer, sizeof locationPathBuffer,
@@ -451,19 +451,19 @@ int main(int argumentCount, char **argumentVector) {
     if (isDumpModeRequested) {
         SemicolonState_setTerminalDimensions(semicolonState, requestedDumpWidth, requestedDumpHeight);
 
-        size_t visibleRailRows = SemicolonRail_visibleRows(requestedDumpHeight);
-        size_t visibleCodeRows = SemicolonCode_visibleRows(requestedDumpHeight);
+        bytes visibleRailRows = SemicolonRail_visibleRows(requestedDumpHeight);
+        bytes visibleCodeRows = SemicolonCode_visibleRows(requestedDumpHeight);
 
         SemicolonRail_syncVisibleRows(semicolonState, visibleRailRows);
         SemicolonCode_syncVisibleRows(semicolonState, 0u, 0u, visibleCodeRows);
         SemicolonFooter_updateBreadcrumb(semicolonState, SemicolonState_getOpenFilePath(semicolonState));
         SemicolonFooter_updateClock(semicolonState);
 
-        size_t planeCellCount = requestedDumpWidth * requestedDumpHeight;
-        uint32_t *dumpCells = (uint32_t*) Memory_alloc(TYPE_BYTE_ARRAY, planeCellCount * sizeof(uint32_t));
-        uint16_t *dumpStyles = (uint16_t*) Memory_alloc(TYPE_BYTE_ARRAY, planeCellCount * sizeof(uint16_t));
-        uint32_t *dumpFg = (uint32_t*) Memory_alloc(TYPE_BYTE_ARRAY, planeCellCount * sizeof(uint32_t));
-        uint32_t *dumpBg = (uint32_t*) Memory_alloc(TYPE_BYTE_ARRAY, planeCellCount * sizeof(uint32_t));
+        bytes planeCellCount = requestedDumpWidth * requestedDumpHeight;
+        u32 *dumpCells = (u32*) Memory_alloc(TYPE_BYTE_ARRAY, planeCellCount * sizeof(u32));
+        u16 *dumpStyles = (u16*) Memory_alloc(TYPE_BYTE_ARRAY, planeCellCount * sizeof(u16));
+        u32 *dumpFg = (u32*) Memory_alloc(TYPE_BYTE_ARRAY, planeCellCount * sizeof(u32));
+        u32 *dumpBg = (u32*) Memory_alloc(TYPE_BYTE_ARRAY, planeCellCount * sizeof(u32));
 
         if (dumpCells != nullptr && dumpStyles != nullptr && dumpFg != nullptr && dumpBg != nullptr) {
             TerminalCanvas dumpCanvas = TerminalCanvas(dumpCells, dumpStyles, dumpFg, dumpBg,
@@ -476,7 +476,7 @@ int main(int argumentCount, char **argumentVector) {
                 SemicolonCode_paintMarkdownPreview(semicolonState, &dumpCanvas);
             SemicolonRail_paintColors(semicolonState, &dumpCanvas);
 
-            for (size_t rowIndex = 0u; rowIndex < requestedDumpHeight; ++rowIndex) {
+            for (bytes rowIndex = 0u; rowIndex < requestedDumpHeight; ++rowIndex) {
                 TerminalCanvasTextRow canvasRow = TerminalCanvas_copyRow(&dumpCanvas, rowIndex);
                 fwrite(canvasRow.data, 1u, canvasRow.bytes, stdout);
                 fputc('\n', stdout);
@@ -537,11 +537,11 @@ int main(int argumentCount, char **argumentVector) {
         bool isGrabbingDivider = false;
         bool isGrabMoved = false;
         int grabStartX = 0;
-        size_t grabStartWidth = 0u;
+        bytes grabStartWidth = 0u;
         bool haveLastDividerClick = false;
-        uint64_t lastDividerClickNs = 0u;
-        size_t markdownCopiedBlock = SIZE_MAX;
-        uint64_t markdownCopiedUntilNs = 0u;
+        u64 lastDividerClickNs = 0u;
+        bytes markdownCopiedBlock = SIZE_MAX;
+        u64 markdownCopiedUntilNs = 0u;
 
         while (isLoopRunning) {
             if (markdownCopiedUntilNs != 0u && SemicolonV2_monotonicNowNs() >= markdownCopiedUntilNs) {
@@ -575,8 +575,8 @@ int main(int argumentCount, char **argumentVector) {
 
             if (havePointer) {
                 TerminalPointerEvent pointerEvent = TerminalInput_getEvent(&terminalInput);
-                size_t seamColumn = SemicolonState_isRailVisible(semicolonState) ? SemicolonState_getRailWidth(semicolonState) : 0u;
-                size_t middleRowY = SemicolonState_getTerminalHeight(semicolonState) / 2u;
+                bytes seamColumn = SemicolonState_isRailVisible(semicolonState) ? SemicolonState_getRailWidth(semicolonState) : 0u;
+                bytes middleRowY = SemicolonState_getTerminalHeight(semicolonState) / 2u;
 
                 switch (pointerEvent.kind) {
                     case TERMINAL_POINTER_MOVE: {
@@ -589,15 +589,15 @@ int main(int argumentCount, char **argumentVector) {
                         }
                         if (SemicolonState_isMarkdownFile(semicolonState) && SemicolonState_isMarkdownPreview(semicolonState)) {
                             TerminalMarkdownView *markdownView = SemicolonState_getMarkdownView(semicolonState);
-                            size_t terminalWidth = SemicolonState_getTerminalWidth(semicolonState);
-                            size_t terminalHeight = SemicolonState_getTerminalHeight(semicolonState);
-                            size_t contentX = (SemicolonState_isRailVisible(semicolonState) ? SemicolonState_getRailWidth(semicolonState) : 0u) + 3u;
-                            size_t contentY = 4u;
+                            bytes terminalWidth = SemicolonState_getTerminalWidth(semicolonState);
+                            bytes terminalHeight = SemicolonState_getTerminalHeight(semicolonState);
+                            bytes contentX = (SemicolonState_isRailVisible(semicolonState) ? SemicolonState_getRailWidth(semicolonState) : 0u) + 3u;
+                            bytes contentY = 4u;
                             if (markdownView != nullptr && contentX < terminalWidth && contentY + 1u < terminalHeight
                                 && pointerEvent.x >= contentX && pointerEvent.x < terminalWidth
                                 && pointerEvent.y >= contentY && pointerEvent.y < terminalHeight - 1u) {
-                                size_t documentRow = TerminalMarkdownView_getScroll(markdownView) + (pointerEvent.y - contentY);
-                                size_t documentCol = TerminalMarkdownView_rowScrollX(markdownView, documentRow) + (pointerEvent.x - contentX);
+                                bytes documentRow = TerminalMarkdownView_getScroll(markdownView) + (pointerEvent.y - contentY);
+                                bytes documentCol = TerminalMarkdownView_rowScrollX(markdownView, documentRow) + (pointerEvent.x - contentX);
                                 (void) TerminalMarkdownView_setHover(markdownView, documentRow, documentCol);
                             } else if (markdownView != nullptr) {
                                 TerminalMarkdownView_clearHover(markdownView);
@@ -686,22 +686,22 @@ int main(int argumentCount, char **argumentVector) {
                         // 7. Markdown preview area (copy code button & clickable links)
                         if (SemicolonState_isMarkdownFile(semicolonState) && SemicolonState_isMarkdownPreview(semicolonState)) {
                             TerminalMarkdownView *markdownView = SemicolonState_getMarkdownView(semicolonState);
-                            size_t terminalWidth = SemicolonState_getTerminalWidth(semicolonState);
-                            size_t terminalHeight = SemicolonState_getTerminalHeight(semicolonState);
-                            size_t contentX = (SemicolonState_isRailVisible(semicolonState) ? SemicolonState_getRailWidth(semicolonState) : 0u) + 3u;
-                            size_t contentY = 4u;
+                            bytes terminalWidth = SemicolonState_getTerminalWidth(semicolonState);
+                            bytes terminalHeight = SemicolonState_getTerminalHeight(semicolonState);
+                            bytes contentX = (SemicolonState_isRailVisible(semicolonState) ? SemicolonState_getRailWidth(semicolonState) : 0u) + 3u;
+                            bytes contentY = 4u;
                             if (markdownView != nullptr && contentX < terminalWidth && contentY + 1u < terminalHeight) {
-                                size_t contentWidth = terminalWidth - contentX;
-                                size_t contentHeight = terminalHeight - contentY - 1u;
+                                bytes contentWidth = terminalWidth - contentX;
+                                bytes contentHeight = terminalHeight - contentY - 1u;
                                 if (pointerEvent.x >= contentX && pointerEvent.x < contentX + contentWidth
                                     && pointerEvent.y >= contentY && pointerEvent.y < contentY + contentHeight) {
-                                    size_t documentRow = TerminalMarkdownView_getScroll(markdownView) + (pointerEvent.y - contentY);
-                                    size_t documentCol = TerminalMarkdownView_rowScrollX(markdownView, documentRow) + (pointerEvent.x - contentX);
+                                    bytes documentRow = TerminalMarkdownView_getScroll(markdownView) + (pointerEvent.y - contentY);
+                                    bytes documentCol = TerminalMarkdownView_rowScrollX(markdownView, documentRow) + (pointerEvent.x - contentX);
                                     TerminalMarkdownAction action = TerminalMarkdownView_actionAt(markdownView, documentRow, documentCol);
                                     if (action.kind == TERMINAL_MARKDOWN_ACTION_COPY_CODE) {
                                         char *copyBuffer = (char*) Memory_alloc(TYPE_BYTE_ARRAY, 65536u);
                                         if (copyBuffer != nullptr) {
-                                            size_t bytesWritten = 0u;
+                                            bytes bytesWritten = 0u;
                                             if (TerminalMarkdownView_copyBlock(markdownView, action.block, copyBuffer, 65536u, &bytesWritten) && bytesWritten > 0u) {
                                                 (void) Clipboard_setText(copyBuffer);
                                                 (void) TerminalMarkdownView_setCopied(markdownView, action.block, true);
@@ -713,7 +713,7 @@ int main(int argumentCount, char **argumentVector) {
                                         break;
                                     } else if (action.kind == TERMINAL_MARKDOWN_ACTION_LINK && action.target != nullptr && action.targetLength > 0u) {
                                         char targetUrl[1024];
-                                        size_t copyLength = action.targetLength < sizeof (targetUrl) - 1u ? action.targetLength : sizeof (targetUrl) - 1u;
+                                        bytes copyLength = action.targetLength < sizeof (targetUrl) - 1u ? action.targetLength : sizeof (targetUrl) - 1u;
                                         memcpy(targetUrl, action.target, copyLength);
                                         targetUrl[copyLength] = '\0';
                                         bool isWebUrl = (strncmp(targetUrl, "http://", 7) == 0
@@ -764,7 +764,7 @@ int main(int argumentCount, char **argumentVector) {
                                        && wantedWidth <= (int) SemicolonState_getTerminalWidth(semicolonState) - 20) {
                                 if (!SemicolonState_isRailVisible(semicolonState))
                                     SemicolonState_setRailVisible(semicolonState, true);
-                                SemicolonState_setRailWidth(semicolonState, (size_t) wantedWidth);
+                                SemicolonState_setRailWidth(semicolonState, (bytes) wantedWidth);
                             }
                         }
                         break;
@@ -772,7 +772,7 @@ int main(int argumentCount, char **argumentVector) {
                     case TERMINAL_POINTER_RELEASE: {
                         if (isGrabbingDivider) {
                             if (!isGrabMoved) {
-                                uint64_t currentNs = SemicolonV2_monotonicNowNs();
+                                u64 currentNs = SemicolonV2_monotonicNowNs();
                                 if (haveLastDividerClick && currentNs >= lastDividerClickNs
                                     && currentNs - lastDividerClickNs <= 300000000ULL) {
                                     haveLastDividerClick = false;
@@ -802,10 +802,10 @@ int main(int argumentCount, char **argumentVector) {
                 } else if (inputKeyCode == KEY_RIGHT) {
                     SemicolonState_scrollHorizontal(semicolonState, 4);
                 } else if (inputKeyCode == KEY_PPAGE) {
-                    size_t stepRows = SemicolonCode_visibleRows(SemicolonState_getTerminalHeight(semicolonState));
+                    bytes stepRows = SemicolonCode_visibleRows(SemicolonState_getTerminalHeight(semicolonState));
                     SemicolonState_scrollVertical(semicolonState, -(int64_t) stepRows);
                 } else if (inputKeyCode == KEY_NPAGE) {
-                    size_t stepRows = SemicolonCode_visibleRows(SemicolonState_getTerminalHeight(semicolonState));
+                    bytes stepRows = SemicolonCode_visibleRows(SemicolonState_getTerminalHeight(semicolonState));
                     SemicolonState_scrollVertical(semicolonState, (int64_t) stepRows);
                 } else if (inputKeyCode == KEY_HOME) {
                     SemicolonState_scrollToTop(semicolonState);

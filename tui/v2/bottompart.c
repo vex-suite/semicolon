@@ -57,7 +57,7 @@ void SemicolonFooter_updateClock(SemicolonState *semicolonState) {
     }
 }
 
-void SemicolonFooter_updateCursor(SemicolonState *semicolonState, size_t lineNumber, size_t columnNumber) {
+void SemicolonFooter_updateCursor(SemicolonState *semicolonState, bytes lineNumber, bytes columnNumber) {
     if (semicolonState == nullptr)
         return;
     (void) snprintf((*semicolonState).lineChipBuffer, sizeof (*semicolonState).lineChipBuffer,

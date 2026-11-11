@@ -7,15 +7,15 @@
 typedef struct SemicolonIconEntry {
     const char *format;
     const char *extensions;
-    uint32_t glyph;
-    uint32_t color;
+    u32 glyph;
+    u32 color;
 } SemicolonIconEntry;
 
 typedef struct SemicolonNamedIcon {
     const char *name;
     const char *description;
-    uint32_t glyph;
-    uint32_t color;
+    u32 glyph;
+    u32 color;
 } SemicolonNamedIcon;
 
 static const SemicolonNamedIcon SEMICOLON_NAMED_ICONS[] = {

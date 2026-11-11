@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Owner: the semicolon terminal shell (vexgraph-ecosystem/semicolon/src/main/tui-main.c).
+"""Owner: the semicolon terminal shell (vex/semicolon/main/tui-main.c).
 
 MODULE: tui_main_test.py
 REGISTRY: main() builds the shell through its own build.py and proves the shell's
@@ -49,7 +49,7 @@ import termios
 import time
 
 ROOT = Path(__file__).resolve().parents[3]
-APP = ROOT / "vexgraph-ecosystem/semicolon"
+APP = ROOT / "vex/semicolon"
 BUILD = APP / "build.py"
 BINARY = APP / ".build/semicolon-tui"
 
@@ -57,7 +57,7 @@ BINARY = APP / ".build/semicolon-tui"
 # the dump has to be given a root and a file: an ambient cwd would make the frame - and so
 # every assertion about it - a guess.
 PROJECT_ROOT = APP
-PROJECT_FILE = ROOT / "vexgraph-ecosystem/vexspoke/src/oop/type.h"
+PROJECT_FILE = ROOT / "vex/vexspoke/oop/type.h"
 
 # The interactive runs are pinned to the same project and file as the dump, and to a
 # throwaway state directory: a session cache is per project and lives outside the tree, so
@@ -1155,7 +1155,7 @@ def main():
     # burst landed in one frame, which is why no cadence was felt.
     #
     # The frame count comes from the transaction brackets: every frame opens exactly one,
-    # so the bracket doubles as a frame counter.
+    # so the bracket f64s as a frame counter.
     # After the divider drag the rail is 60 cells wide, so x=70 is inside the code
     # area; x=60 now lands on the rail and would scroll the file list instead.
     first_line = first_gutter(screen_plain())

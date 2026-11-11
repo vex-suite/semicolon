@@ -66,7 +66,7 @@ static int SemicolonRail_compareDirEntries(const void *leftPointer, const void *
 const char *SemicolonRail_getFileIcon(const char *fileName, bool isNerdIcons) {
     if (!isNerdIcons)
         return "-";
-    for (size_t namedIndex = 0u; namedIndex < SEMICOLON_NAMED_ICON_COUNT; ++namedIndex) {
+    for (bytes namedIndex = 0u; namedIndex < SEMICOLON_NAMED_ICON_COUNT; ++namedIndex) {
         if (strcasecmp(fileName, SEMICOLON_NAMED_ICONS[namedIndex].name) == 0)
             return SemicolonUtil_iconUtf8(SEMICOLON_NAMED_ICONS[namedIndex].glyph);
     }
@@ -74,14 +74,14 @@ const char *SemicolonRail_getFileIcon(const char *fileName, bool isNerdIcons) {
     if (extensionPointer == nullptr)
         return "\uf15c";
     const char *suffixPointer = extensionPointer[0] == '.' ? extensionPointer + 1u : extensionPointer;
-    for (size_t catalogIndex = 0u; catalogIndex < SEMICOLON_ICON_CATALOG_COUNT; ++catalogIndex) {
+    for (bytes catalogIndex = 0u; catalogIndex < SEMICOLON_ICON_CATALOG_COUNT; ++catalogIndex) {
         const char *cursorPointer = SEMICOLON_ICON_CATALOG[catalogIndex].extensions;
         while (*cursorPointer != '\0') {
             while (*cursorPointer == ' ')
                 ++cursorPointer;
             const char *spacePointer = strchr(cursorPointer, ' ');
-            size_t tokenLength = spacePointer == nullptr ? strlen(cursorPointer)
-                                                         : (size_t) (spacePointer - cursorPointer);
+            bytes tokenLength = spacePointer == nullptr ? strlen(cursorPointer)
+                                                         : (bytes) (spacePointer - cursorPointer);
             if (strlen(suffixPointer) == tokenLength && strncasecmp(cursorPointer, suffixPointer, tokenLength) == 0)
                 return SemicolonUtil_iconUtf8(SEMICOLON_ICON_CATALOG[catalogIndex].glyph);
             cursorPointer = spacePointer == nullptr ? cursorPointer + tokenLength : spacePointer;
@@ -90,18 +90,18 @@ const char *SemicolonRail_getFileIcon(const char *fileName, bool isNerdIcons) {
     return "\uf15c";
 }
 
-uint32_t SemicolonRail_getIconColor(uint32_t glyphCodepoint) {
+u32 SemicolonRail_getIconColor(u32 glyphCodepoint) {
     if (glyphCodepoint == 0xf07bu || glyphCodepoint == 0xf07cu)
         return SEMICOLON_V2_FOLDER; // warm golden brown fried chicken color
-    for (size_t namedIndex = 0u; namedIndex < SEMICOLON_NAMED_ICON_COUNT; ++namedIndex) {
+    for (bytes namedIndex = 0u; namedIndex < SEMICOLON_NAMED_ICON_COUNT; ++namedIndex) {
         if (SEMICOLON_NAMED_ICONS[namedIndex].glyph == glyphCodepoint)
             return (SEMICOLON_NAMED_ICONS[namedIndex].color << 8u) | 0xFFu;
     }
-    for (size_t uiIndex = 0u; uiIndex < SEMICOLON_UI_ICON_COUNT; ++uiIndex) {
+    for (bytes uiIndex = 0u; uiIndex < SEMICOLON_UI_ICON_COUNT; ++uiIndex) {
         if (SEMICOLON_UI_ICONS[uiIndex].glyph == glyphCodepoint)
             return (SEMICOLON_UI_ICONS[uiIndex].color << 8u) | 0xFFu;
     }
-    for (size_t catalogIndex = 0u; catalogIndex < SEMICOLON_ICON_CATALOG_COUNT; ++catalogIndex) {
+    for (bytes catalogIndex = 0u; catalogIndex < SEMICOLON_ICON_CATALOG_COUNT; ++catalogIndex) {
         if (SEMICOLON_ICON_CATALOG[catalogIndex].glyph == glyphCodepoint)
             return (SEMICOLON_ICON_CATALOG[catalogIndex].color << 8u) | 0xFFu;
     }
@@ -132,7 +132,7 @@ uint32_t SemicolonRail_getIconColor(uint32_t glyphCodepoint) {
 static void SemicolonRail_clearGitignore(SemicolonState *semicolonState) {
     if (semicolonState == nullptr)
         return;
-    for (size_t patternIndex = 0u; patternIndex < (*semicolonState).ignorePatternCount; ++patternIndex) {
+    for (bytes patternIndex = 0u; patternIndex < (*semicolonState).ignorePatternCount; ++patternIndex) {
         if ((*semicolonState).ignorePatterns[patternIndex].patternText != nullptr)
             Memory_free((*semicolonState).ignorePatterns[patternIndex].patternText);
     }
@@ -142,7 +142,7 @@ static void SemicolonRail_clearGitignore(SemicolonState *semicolonState) {
 static bool SemicolonRail_addGitignorePattern(SemicolonState *semicolonState, const char *lineText) {
     while (*lineText == ' ' || *lineText == '\t')
         ++lineText;
-    size_t lineLength = strlen(lineText);
+    bytes lineLength = strlen(lineText);
     while (lineLength != 0u && (lineText[lineLength - 1u] == ' ' || lineText[lineLength - 1u] == '\t'))
         --lineLength;
     if (lineLength == 0u || lineText[0] == '#')
@@ -157,14 +157,14 @@ static bool SemicolonRail_addGitignorePattern(SemicolonState *semicolonState, co
     bool isDirectoryOnly = lineText[lineLength - 1u] == '/';
     if (isDirectoryOnly)
         --lineLength;
-    size_t startIndex = lineText[0] == '/' ? 1u : 0u;
+    bytes startIndex = lineText[0] == '/' ? 1u : 0u;
     bool isAnchored = startIndex != 0u;
     bool hasSlash = memchr(lineText + startIndex, '/', lineLength - startIndex) != nullptr;
     if (lineLength <= startIndex)
         return true;
 
     if ((*semicolonState).ignorePatternCount == (*semicolonState).ignorePatternCapacity) {
-        size_t nextCapacity = (*semicolonState).ignorePatternCapacity == 0u ? 32u
+        bytes nextCapacity = (*semicolonState).ignorePatternCapacity == 0u ? 32u
                                                                            : (*semicolonState).ignorePatternCapacity * 2u;
         SemicolonIgnorePattern *grownArray = (SemicolonIgnorePattern*) Memory_alloc(
             TYPE_BYTE_ARRAY, nextCapacity * sizeof(SemicolonIgnorePattern));
@@ -220,7 +220,7 @@ void SemicolonRail_reloadGitignore(SemicolonState *semicolonState) {
 
     char lineBuffer[1024];
     while (fgets(lineBuffer, sizeof lineBuffer, filePointer) != nullptr) {
-        size_t lineLength = strlen(lineBuffer);
+        bytes lineLength = strlen(lineBuffer);
         while (lineLength != 0u && (lineBuffer[lineLength - 1u] == '\n' || lineBuffer[lineLength - 1u] == '\r'))
             lineBuffer[--lineLength] = '\0';
         if (!SemicolonRail_addGitignorePattern(semicolonState, lineBuffer))
@@ -233,7 +233,7 @@ static bool SemicolonRail_patternMatches(const SemicolonIgnorePattern *patternPo
     if ((*patternPointer).isDirectoryOnly) {
         const char *slashPointer = relativePath;
         while ((slashPointer = strchr(slashPointer, '/')) != nullptr) {
-            size_t prefixLength = (size_t) (slashPointer - relativePath);
+            bytes prefixLength = (bytes) (slashPointer - relativePath);
             char prefixBuffer[1024];
             if (prefixLength < sizeof prefixBuffer) {
                 memcpy(prefixBuffer, relativePath, prefixLength);
@@ -249,8 +249,8 @@ static bool SemicolonRail_patternMatches(const SemicolonIgnorePattern *patternPo
     const char *cursorPointer = relativePath;
     while (*cursorPointer != '\0') {
         const char *slashPointer = strchr(cursorPointer, '/');
-        size_t tokenLength = slashPointer == nullptr ? strlen(cursorPointer)
-                                                    : (size_t) (slashPointer - cursorPointer);
+        bytes tokenLength = slashPointer == nullptr ? strlen(cursorPointer)
+                                                    : (bytes) (slashPointer - cursorPointer);
         char componentBuffer[256];
         if (tokenLength < sizeof componentBuffer) {
             memcpy(componentBuffer, cursorPointer, tokenLength);
@@ -268,13 +268,13 @@ static bool SemicolonRail_patternMatches(const SemicolonIgnorePattern *patternPo
 static bool SemicolonRail_isEntryIgnored(SemicolonState *semicolonState, const SemicolonRailEntry *entryPointer) {
     if (semicolonState == nullptr || entryPointer == nullptr)
         return false;
-    size_t rootLength = strlen((*semicolonState).railRootDirectory);
+    bytes rootLength = strlen((*semicolonState).railRootDirectory);
     if (strncmp((*entryPointer).entryPath, (*semicolonState).railRootDirectory, rootLength) != 0
         || (*entryPointer).entryPath[rootLength] != '/')
         return false;
     const char *relativePath = (*entryPointer).entryPath + rootLength + 1u;
     bool isIgnored = false;
-    for (size_t patternIndex = 0u; patternIndex < (*semicolonState).ignorePatternCount; ++patternIndex) {
+    for (bytes patternIndex = 0u; patternIndex < (*semicolonState).ignorePatternCount; ++patternIndex) {
         SemicolonIgnorePattern *pattern = &(*semicolonState).ignorePatterns[patternIndex];
         if (!SemicolonRail_patternMatches(pattern, relativePath))
             continue;
@@ -287,15 +287,15 @@ static bool SemicolonRail_isEntryIgnored(SemicolonState *semicolonState, const S
 
 static SemicolonRailEntry *SemicolonRail_entryForId(SemicolonState *semicolonState, TerminalTreeNodeId nodeId) {
     if (semicolonState == nullptr || nodeId == TERMINAL_TREE_NO_NODE
-        || (size_t) nodeId > (*semicolonState).railEntryCount)
+        || (bytes) nodeId > (*semicolonState).railEntryCount)
         return nullptr;
-    return &(*semicolonState).railEntries[(size_t) nodeId - 1u];
+    return &(*semicolonState).railEntries[(bytes) nodeId - 1u];
 }
 
 static bool SemicolonRail_reserveEntry(SemicolonState *semicolonState) {
     if ((*semicolonState).railEntryCount < (*semicolonState).railEntryCapacity)
         return true;
-    size_t nextCapacity = (*semicolonState).railEntryCapacity == 0u ? 64u
+    bytes nextCapacity = (*semicolonState).railEntryCapacity == 0u ? 64u
                                                                    : (*semicolonState).railEntryCapacity * 2u;
     SemicolonRailEntry *grownArray = (SemicolonRailEntry*) Memory_alloc(
         TYPE_BYTE_ARRAY, nextCapacity * sizeof(SemicolonRailEntry));
@@ -342,7 +342,7 @@ bool SemicolonRail_readChildren(SemicolonState *semicolonState, TerminalTreeNode
         return false;
 
     SemicolonDirEntry foundEntries[512];
-    size_t foundCount = 0u;
+    bytes foundCount = 0u;
     struct dirent *dirItem = nullptr;
     while ((dirItem = readdir(dirHandle)) != nullptr && foundCount < 512u) {
         if (strcmp((*dirItem).d_name, ".") == 0 || strcmp((*dirItem).d_name, "..") == 0)
@@ -371,7 +371,7 @@ bool SemicolonRail_readChildren(SemicolonState *semicolonState, TerminalTreeNode
     char currentParentPath[SEMICOLON_V2_MAX_PATH];
     (void) snprintf(currentParentPath, sizeof currentParentPath, "%s", (*parentEntry).entryPath);
 
-    for (size_t entryIndex = 0u; entryIndex < foundCount; ++entryIndex) {
+    for (bytes entryIndex = 0u; entryIndex < foundCount; ++entryIndex) {
         char childPath[SEMICOLON_V2_MAX_PATH];
         (void) snprintf(childPath, sizeof childPath, "%s/%s", currentParentPath, foundEntries[entryIndex].entryName);
         (void) SemicolonRail_addNode(semicolonState, parentNodeId, foundEntries[entryIndex].entryName,
@@ -382,7 +382,7 @@ bool SemicolonRail_readChildren(SemicolonState *semicolonState, TerminalTreeNode
 
 static TerminalTreeNodeId SemicolonRail_findChild(SemicolonState *semicolonState, TerminalTreeNodeId parentNodeId,
                                                   const char *childName) {
-    for (size_t entryIndex = 0u; entryIndex < (*semicolonState).railEntryCount; ++entryIndex) {
+    for (bytes entryIndex = 0u; entryIndex < (*semicolonState).railEntryCount; ++entryIndex) {
         if ((*semicolonState).railEntries[entryIndex].parentNodeId == parentNodeId
             && strcmp((*semicolonState).railEntries[entryIndex].entryLabel, childName) == 0)
             return (TerminalTreeNodeId) (entryIndex + 1u);
@@ -421,7 +421,7 @@ bool SemicolonRail_revealPath(SemicolonState *semicolonState, const char *filePa
     if (semicolonState == nullptr || filePath == nullptr || (*semicolonState).treeView == nullptr
         || (*semicolonState).railRootNodeId == TERMINAL_TREE_NO_NODE)
         return false;
-    size_t rootLength = strlen((*semicolonState).railRootDirectory);
+    bytes rootLength = strlen((*semicolonState).railRootDirectory);
     if (rootLength == 0u || strncmp(filePath, (*semicolonState).railRootDirectory, rootLength) != 0
         || filePath[rootLength] != '/')
         return false;
@@ -430,7 +430,7 @@ bool SemicolonRail_revealPath(SemicolonState *semicolonState, const char *filePa
     const char *cursorPointer = filePath + rootLength + 1u;
     while (*cursorPointer != '\0') {
         char componentBuffer[256];
-        size_t tokenLength = 0u;
+        bytes tokenLength = 0u;
         while (cursorPointer[tokenLength] != '\0' && cursorPointer[tokenLength] != '/'
                && tokenLength + 1u < sizeof componentBuffer)
             ++tokenLength;
@@ -452,26 +452,26 @@ bool SemicolonRail_revealPath(SemicolonState *semicolonState, const char *filePa
     return true;
 }
 
-size_t SemicolonRail_visibleRows(size_t terminalHeight) {
+bytes SemicolonRail_visibleRows(bytes terminalHeight) {
     return terminalHeight > 2u ? terminalHeight - 2u : 0u;
 }
 
-static size_t SemicolonRail_calculateIndent(TerminalTreeRow treeRow) {
-    size_t deepestLevel = 6u;
-    size_t depthLevel = treeRow.depth + 1u;
+static bytes SemicolonRail_calculateIndent(TerminalTreeRow treeRow) {
+    bytes deepestLevel = 6u;
+    bytes depthLevel = treeRow.depth + 1u;
     return (depthLevel > deepestLevel ? deepestLevel : depthLevel) * 2u;
 }
 
-void SemicolonRail_syncVisibleRows(SemicolonState *semicolonState, size_t visibleRowCount) {
+void SemicolonRail_syncVisibleRows(SemicolonState *semicolonState, bytes visibleRowCount) {
     if (semicolonState == nullptr || (*semicolonState).treeView == nullptr)
         return;
     SemicolonRail_reloadGitignore(semicolonState);
 
     (void) TerminalTreeView_setViewportRows((*semicolonState).treeView, visibleRowCount + 1u);
-    size_t firstRowIndex = TerminalTreeView_scrollRow((*semicolonState).treeView);
-    size_t totalVisibleCount = TerminalTreeView_visibleCount((*semicolonState).treeView);
+    bytes firstRowIndex = TerminalTreeView_scrollRow((*semicolonState).treeView);
+    bytes totalVisibleCount = TerminalTreeView_visibleCount((*semicolonState).treeView);
 
-    for (size_t rowIndex = 0u; rowIndex < (*semicolonState).railRowCount; ++rowIndex) {
+    for (bytes rowIndex = 0u; rowIndex < (*semicolonState).railRowCount; ++rowIndex) {
         TerminalText *rowTextView = (*semicolonState).railRowTexts[rowIndex];
         if (rowTextView == nullptr)
             continue;
@@ -482,10 +482,10 @@ void SemicolonRail_syncVisibleRows(SemicolonState *semicolonState, size_t visibl
         }
 
         TerminalTreeRow record = TerminalTreeView_rowAt((*semicolonState).treeView, firstRowIndex + rowIndex + 1u);
-        size_t indentSpaces = SemicolonRail_calculateIndent(record);
+        bytes indentSpaces = SemicolonRail_calculateIndent(record);
         char formattedBuffer[512];
-        size_t writtenBytes = 0u;
-        for (size_t spaceIndex = 0u; spaceIndex < indentSpaces && writtenBytes + 2u < sizeof formattedBuffer; ++spaceIndex)
+        bytes writtenBytes = 0u;
+        for (bytes spaceIndex = 0u; spaceIndex < indentSpaces && writtenBytes + 2u < sizeof formattedBuffer; ++spaceIndex)
             formattedBuffer[writtenBytes++] = ' ';
         formattedBuffer[writtenBytes] = '\0';
 
@@ -500,10 +500,10 @@ void SemicolonRail_syncVisibleRows(SemicolonState *semicolonState, size_t visibl
                             record.label);
         }
 
-        size_t availableCells = (*semicolonState).railPanelWidth > 2u ? (*semicolonState).railPanelWidth - 2u : 0u;
-        size_t rowLength = strlen(formattedBuffer);
+        bytes availableCells = (*semicolonState).railPanelWidth > 2u ? (*semicolonState).railPanelWidth - 2u : 0u;
+        bytes rowLength = strlen(formattedBuffer);
         if (SemicolonUtil_cellsOf(formattedBuffer, rowLength) > availableCells) {
-            size_t keepCells = availableCells > 1u ? availableCells - 1u : 0u;
+            bytes keepCells = availableCells > 1u ? availableCells - 1u : 0u;
             rowLength = SemicolonUtil_bytesForCells(formattedBuffer, rowLength, keepCells);
             if (rowLength + 3u < sizeof formattedBuffer) {
                 memcpy(formattedBuffer + rowLength, "…", 3u);
@@ -512,7 +512,7 @@ void SemicolonRail_syncVisibleRows(SemicolonState *semicolonState, size_t visibl
             }
         }
 
-        size_t currentCells = SemicolonUtil_cellsOf(formattedBuffer, rowLength);
+        bytes currentCells = SemicolonUtil_cellsOf(formattedBuffer, rowLength);
         while (currentCells < (*semicolonState).railPanelWidth && rowLength + 1u < sizeof formattedBuffer) {
             formattedBuffer[rowLength++] = ' ';
             ++currentCells;
@@ -530,9 +530,9 @@ void SemicolonRail_syncVisibleRows(SemicolonState *semicolonState, size_t visibl
 void SemicolonRail_paintColors(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas) {
     if (semicolonState == nullptr || terminalCanvas == nullptr || (*semicolonState).treeView == nullptr)
         return;
-    size_t canvasWidth = TerminalCanvas_getWidth(terminalCanvas);
-    size_t canvasHeight = TerminalCanvas_getHeight(terminalCanvas);
-    size_t railEndColumn = (*semicolonState).railPanelWidth < canvasWidth ? (*semicolonState).railPanelWidth
+    bytes canvasWidth = TerminalCanvas_getWidth(terminalCanvas);
+    bytes canvasHeight = TerminalCanvas_getHeight(terminalCanvas);
+    bytes railEndColumn = (*semicolonState).railPanelWidth < canvasWidth ? (*semicolonState).railPanelWidth
                                                                           : canvasWidth;
 
     if ((*semicolonState).isRailVisible && railEndColumn > 0u
@@ -545,12 +545,12 @@ void SemicolonRail_paintColors(SemicolonState *semicolonState, TerminalCanvas *t
                         (*semicolonState).isNerdIcons ? (rootRecord.expanded ? "\uf07c" : "\uf07b") : "[]",
                         rootRecord.label);
         SemicolonUtil_copyCellsEllipsis(rootTitle, railEndColumn / 2u, rootClipped, sizeof rootClipped);
-        size_t titleCells = SemicolonUtil_cellsOf(rootClipped, strlen(rootClipped));
+        bytes titleCells = SemicolonUtil_cellsOf(rootClipped, strlen(rootClipped));
         TerminalCanvas_text(terminalCanvas, 0u, 0u, rootClipped, strlen(rootClipped),
                             TerminalPen_3(TERMINAL_STYLE_NONE, SEMICOLON_V2_TEXT, TERMINAL_COLOR_DEFAULT));
 
         if ((*semicolonState).isNerdIcons && railEndColumn > 3u && (*terminalCanvas).fg != nullptr) {
-            uint32_t glyphCodepoint = TerminalCanvas_glyphAt(terminalCanvas, 3u, 0u);
+            u32 glyphCodepoint = TerminalCanvas_glyphAt(terminalCanvas, 3u, 0u);
             (*terminalCanvas).fg[3u] = SemicolonRail_getIconColor(glyphCodepoint);
         }
 
@@ -564,39 +564,39 @@ void SemicolonRail_paintColors(SemicolonState *semicolonState, TerminalCanvas *t
         }
     }
 
-    size_t firstRowIndex = TerminalTreeView_scrollRow((*semicolonState).treeView);
-    size_t totalVisibleCount = TerminalTreeView_visibleCount((*semicolonState).treeView);
+    bytes firstRowIndex = TerminalTreeView_scrollRow((*semicolonState).treeView);
+    bytes totalVisibleCount = TerminalTreeView_visibleCount((*semicolonState).treeView);
 
-    for (size_t rowIndex = 0u; rowIndex < (*semicolonState).railRowCount && rowIndex + 2u < canvasHeight
+    for (bytes rowIndex = 0u; rowIndex < (*semicolonState).railRowCount && rowIndex + 2u < canvasHeight
                                && firstRowIndex + rowIndex + 1u < totalVisibleCount; ++rowIndex) {
         TerminalTreeRow record = TerminalTreeView_rowAt((*semicolonState).treeView, firstRowIndex + rowIndex + 1u);
-        size_t iconXCoordinate = SemicolonRail_calculateIndent(record) + 2u;
-        size_t yCoordinate = rowIndex + 1u;
+        bytes iconXCoordinate = SemicolonRail_calculateIndent(record) + 2u;
+        bytes yCoordinate = rowIndex + 1u;
         SemicolonRailEntry *entry = SemicolonRail_entryForId(semicolonState, record.id);
 
         if ((*semicolonState).isNerdIcons && iconXCoordinate < railEndColumn && (*terminalCanvas).fg != nullptr) {
-            uint32_t glyphCodepoint = TerminalCanvas_glyphAt(terminalCanvas, iconXCoordinate, yCoordinate);
+            u32 glyphCodepoint = TerminalCanvas_glyphAt(terminalCanvas, iconXCoordinate, yCoordinate);
             (*terminalCanvas).fg[yCoordinate * canvasWidth + iconXCoordinate] =
                 SemicolonRail_getIconColor(glyphCodepoint);
         }
 
         if (SemicolonRail_isEntryIgnored(semicolonState, entry) && (*terminalCanvas).fg != nullptr) {
-            size_t nameXCoordinate = iconXCoordinate + 2u;
-            for (size_t xIndex = nameXCoordinate; xIndex < railEndColumn; ++xIndex)
+            bytes nameXCoordinate = iconXCoordinate + 2u;
+            for (bytes xIndex = nameXCoordinate; xIndex < railEndColumn; ++xIndex)
                 (*terminalCanvas).fg[yCoordinate * canvasWidth + xIndex] = SEMICOLON_V2_IGNORED;
         }
     }
 
     if ((*semicolonState).isNerdIcons && (*terminalCanvas).fg != nullptr) {
-        for (size_t xCoordinate = (*semicolonState).railPanelWidth; xCoordinate < canvasWidth; ++xCoordinate) {
-            uint32_t glyphCodepoint = TerminalCanvas_glyphAt(terminalCanvas, xCoordinate, 0u);
+        for (bytes xCoordinate = (*semicolonState).railPanelWidth; xCoordinate < canvasWidth; ++xCoordinate) {
+            u32 glyphCodepoint = TerminalCanvas_glyphAt(terminalCanvas, xCoordinate, 0u);
             if (glyphCodepoint >= 0xE000u && glyphCodepoint <= 0xF8FFu)
                 (*terminalCanvas).fg[xCoordinate] = SemicolonRail_getIconColor(glyphCodepoint);
         }
     }
 }
 
-void SemicolonRail_handlePointerClick(SemicolonState *semicolonState, size_t rowCoordinate) {
+void SemicolonRail_handlePointerClick(SemicolonState *semicolonState, bytes rowCoordinate) {
     if (semicolonState == nullptr || (*semicolonState).treeView == nullptr)
         return;
 
@@ -629,7 +629,7 @@ TerminalPanel *createRailPanel(SemicolonState *semicolonState) {
         return nullptr;
     }
 
-    for (size_t rowIndex = 0u; rowIndex < SEMICOLON_V2_MAX_ROWS; ++rowIndex) {
+    for (bytes rowIndex = 0u; rowIndex < SEMICOLON_V2_MAX_ROWS; ++rowIndex) {
         TerminalText *rowTextView = TerminalText("");
         if (rowTextView == nullptr || !TerminalPanel_addText(
                 railPanel, rowTextView, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_TOP, 1u)).generation) {

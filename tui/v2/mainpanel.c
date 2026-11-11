@@ -28,11 +28,11 @@
  * CONVENTIONS: Descriptive cameled identifiers, zero -> operators, Memory_alloc.
  * ======================================================================== */
 
-size_t SemicolonUtil_cellsOf(const char *byteSpan, size_t byteLength) {
+bytes SemicolonUtil_cellsOf(const char *byteSpan, bytes byteLength) {
     if (byteSpan == nullptr || byteLength == 0u)
         return 0u;
-    size_t cellCount = 0u;
-    size_t byteOffset = 0u;
+    bytes cellCount = 0u;
+    bytes byteOffset = 0u;
     while (byteOffset < byteLength) {
         TerminalCanvasDecodedScalar decoded = TerminalCanvas_utf8Decode(byteSpan + byteOffset, byteLength - byteOffset);
         if (decoded.bytes == 0u) {
@@ -46,11 +46,11 @@ size_t SemicolonUtil_cellsOf(const char *byteSpan, size_t byteLength) {
     return cellCount;
 }
 
-size_t SemicolonUtil_bytesForCells(const char *byteSpan, size_t byteLength, size_t cellTarget) {
+bytes SemicolonUtil_bytesForCells(const char *byteSpan, bytes byteLength, bytes cellTarget) {
     if (byteSpan == nullptr || byteLength == 0u || cellTarget == 0u)
         return 0u;
-    size_t consumedCells = 0u;
-    size_t byteOffset = 0u;
+    bytes consumedCells = 0u;
+    bytes byteOffset = 0u;
     while (byteOffset < byteLength && consumedCells < cellTarget) {
         TerminalCanvasDecodedScalar decoded = TerminalCanvas_utf8Decode(byteSpan + byteOffset, byteLength - byteOffset);
         if (decoded.bytes == 0u) {
@@ -64,11 +64,11 @@ size_t SemicolonUtil_bytesForCells(const char *byteSpan, size_t byteLength, size
     return byteOffset;
 }
 
-void SemicolonUtil_copyCellsEllipsis(const char *sourceString, size_t maximumCells,
-                                     char *destinationBuffer, size_t destinationCapacity) {
+void SemicolonUtil_copyCellsEllipsis(const char *sourceString, bytes maximumCells,
+                                     char *destinationBuffer, bytes destinationCapacity) {
     if (sourceString == nullptr || destinationBuffer == nullptr || destinationCapacity == 0u)
         return;
-    size_t stringLength = strlen(sourceString);
+    bytes stringLength = strlen(sourceString);
     if (SemicolonUtil_cellsOf(sourceString, stringLength) <= maximumCells) {
         (void) snprintf(destinationBuffer, destinationCapacity, "%s", sourceString);
         return;
@@ -78,12 +78,12 @@ void SemicolonUtil_copyCellsEllipsis(const char *sourceString, size_t maximumCel
         return;
     }
 
-    size_t byteOffset = 0u;
-    size_t usedCells = 0u;
+    bytes byteOffset = 0u;
+    bytes usedCells = 0u;
     while (byteOffset < stringLength) {
         TerminalCanvasDecodedScalar decoded = TerminalCanvas_utf8Decode(sourceString + byteOffset, stringLength - byteOffset);
-        size_t cellWidth = decoded.bytes == 0u ? 1u : TerminalCanvas_widthOf(decoded.codepoint);
-        size_t stepBytes = decoded.bytes == 0u ? 1u : decoded.bytes;
+        bytes cellWidth = decoded.bytes == 0u ? 1u : TerminalCanvas_widthOf(decoded.codepoint);
+        bytes stepBytes = decoded.bytes == 0u ? 1u : decoded.bytes;
         if (usedCells + cellWidth + 1u > maximumCells)
             break;
         usedCells += cellWidth;
@@ -97,9 +97,9 @@ void SemicolonUtil_copyCellsEllipsis(const char *sourceString, size_t maximumCel
     destinationBuffer[byteOffset + 3u] = '\0';
 }
 
-const char *SemicolonUtil_iconUtf8(uint32_t codepointValue) {
+const char *SemicolonUtil_iconUtf8(u32 codepointValue) {
     static char staticUtf8Buffer[8];
-    size_t writeIndex = 0u;
+    bytes writeIndex = 0u;
     if (codepointValue < 0x80u) {
         staticUtf8Buffer[writeIndex++] = (char) codepointValue;
     } else if (codepointValue < 0x800u) {
@@ -149,7 +149,7 @@ void SemicolonState_destroy(SemicolonState *semicolonState) {
     }
 
     if ((*semicolonState).ignorePatterns != nullptr) {
-        for (size_t patternIndex = 0u; patternIndex < (*semicolonState).ignorePatternCount; ++patternIndex) {
+        for (bytes patternIndex = 0u; patternIndex < (*semicolonState).ignorePatternCount; ++patternIndex) {
             if ((*semicolonState).ignorePatterns[patternIndex].patternText != nullptr)
                 Memory_free((*semicolonState).ignorePatterns[patternIndex].patternText);
         }
@@ -158,7 +158,7 @@ void SemicolonState_destroy(SemicolonState *semicolonState) {
     }
 
     if ((*semicolonState).fileLines != nullptr) {
-        for (size_t lineIndex = 0u; lineIndex < (*semicolonState).fileLineCount; ++lineIndex) {
+        for (bytes lineIndex = 0u; lineIndex < (*semicolonState).fileLineCount; ++lineIndex) {
             if ((*semicolonState).fileLines[lineIndex] != nullptr)
                 Memory_free((*semicolonState).fileLines[lineIndex]);
         }
@@ -267,12 +267,12 @@ TerminalPanel *createMainPanel(SemicolonState *semicolonState) {
     return rootPanel;
 }
 
-void SemicolonMainPanel_setRailWidth(SemicolonState *semicolonState, size_t newRailWidth) {
+void SemicolonMainPanel_setRailWidth(SemicolonState *semicolonState, bytes newRailWidth) {
     if (semicolonState == nullptr || (*semicolonState).rootMainPanel == nullptr)
         return;
     if (newRailWidth < SEMICOLON_V2_RAIL_MIN_WIDTH)
         newRailWidth = SEMICOLON_V2_RAIL_MIN_WIDTH;
-    size_t maximumAllowedWidth = (*semicolonState).terminalWidth > 25u ? (*semicolonState).terminalWidth - 25u
+    bytes maximumAllowedWidth = (*semicolonState).terminalWidth > 25u ? (*semicolonState).terminalWidth - 25u
                                                                       : SEMICOLON_V2_RAIL_MIN_WIDTH;
     if (newRailWidth > maximumAllowedWidth)
         newRailWidth = maximumAllowedWidth;
@@ -299,14 +299,14 @@ void SemicolonHeader_syncTabs(SemicolonState *semicolonState) {
         return;
 
     TerminalPanel *headerBar = (*semicolonState).headerPanel;
-    size_t railWidth = (*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth : 0u;
+    bytes railWidth = (*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth : 0u;
     if (TerminalPanel_isChildId((*semicolonState).headerProjectSpacerChildId)) {
         (void) TerminalPanel_setAnchor(headerBar, (*semicolonState).headerProjectSpacerChildId,
                                        TerminalAnchor_2(TERMINAL_ANCHOR_BAND_LEFT, railWidth));
     }
 
     // Clean up any retired tabs beyond tabCount
-    for (size_t tabIndex = (*semicolonState).tabCount; tabIndex < SEMICOLON_V2_MAX_TABS; ++tabIndex) {
+    for (bytes tabIndex = (*semicolonState).tabCount; tabIndex < SEMICOLON_V2_MAX_TABS; ++tabIndex) {
         SemicolonEditorTab *extraTab = &(*semicolonState).tabs[tabIndex];
         if (TerminalPanel_isChildId((*extraTab).tabChildId)) {
             TerminalText *detachedText = TerminalPanel_detachText(headerBar, (*extraTab).tabChildId);
@@ -321,7 +321,7 @@ void SemicolonHeader_syncTabs(SemicolonState *semicolonState) {
     }
 
     // Detach all active tabs so their flex slots in headerBar are re-added in strictly consecutive order
-    for (size_t tabIndex = 0u; tabIndex < (*semicolonState).tabCount; ++tabIndex) {
+    for (bytes tabIndex = 0u; tabIndex < (*semicolonState).tabCount; ++tabIndex) {
         SemicolonEditorTab *tabRecord = &(*semicolonState).tabs[tabIndex];
         if (TerminalPanel_isChildId((*tabRecord).tabChildId)) {
             (void) TerminalPanel_detachText(headerBar, (*tabRecord).tabChildId);
@@ -329,10 +329,10 @@ void SemicolonHeader_syncTabs(SemicolonState *semicolonState) {
         }
     }
 
-    size_t usedWidth = railWidth;
-    size_t totalWidth = (*semicolonState).terminalWidth > 0u ? (*semicolonState).terminalWidth : 80u;
+    bytes usedWidth = railWidth;
+    bytes totalWidth = (*semicolonState).terminalWidth > 0u ? (*semicolonState).terminalWidth : 80u;
 
-    for (size_t tabIndex = 0u; tabIndex < (*semicolonState).tabCount; ++tabIndex) {
+    for (bytes tabIndex = 0u; tabIndex < (*semicolonState).tabCount; ++tabIndex) {
         SemicolonEditorTab *tabRecord = &(*semicolonState).tabs[tabIndex];
         bool isActiveTab = (tabIndex == (*semicolonState).activeTabIndex);
         const char *iconGlyph = SemicolonRail_getFileIcon((*tabRecord).tabLabel, (*semicolonState).isNerdIcons);
@@ -351,9 +351,9 @@ void SemicolonHeader_syncTabs(SemicolonState *semicolonState) {
         }
         (void) TerminalText_setBrackets(tabTextView, '[', ']');
 
-        size_t measuredCells = TerminalText_measure(tabTextView);
+        bytes measuredCells = TerminalText_measure(tabTextView);
         if (usedWidth + measuredCells > totalWidth) {
-            size_t availableCells = totalWidth > usedWidth ? totalWidth - usedWidth : 0u;
+            bytes availableCells = totalWidth > usedWidth ? totalWidth - usedWidth : 0u;
             if (availableCells < 5u) {
                 (*tabRecord).tabPixelX = usedWidth;
                 (*tabRecord).tabPixelWidth = 0u;
@@ -381,14 +381,14 @@ void SemicolonHeader_syncTabs(SemicolonState *semicolonState) {
     }
 }
 
-bool SemicolonHeader_handleTabClick(SemicolonState *semicolonState, size_t clickX, TerminalPointerButton pointerButton) {
+bool SemicolonHeader_handleTabClick(SemicolonState *semicolonState, bytes clickX, TerminalPointerButton pointerButton) {
     if (semicolonState == nullptr)
         return false;
-    size_t railWidth = (*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth : 0u;
+    bytes railWidth = (*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth : 0u;
     if (clickX < railWidth)
         return false;
 
-    for (size_t tabIndex = 0u; tabIndex < (*semicolonState).tabCount; ++tabIndex) {
+    for (bytes tabIndex = 0u; tabIndex < (*semicolonState).tabCount; ++tabIndex) {
         SemicolonEditorTab *tabRecord = &(*semicolonState).tabs[tabIndex];
         if ((*tabRecord).tabPixelWidth == 0u || clickX < (*tabRecord).tabPixelX
             || clickX >= (*tabRecord).tabPixelX + (*tabRecord).tabPixelWidth)
@@ -409,9 +409,9 @@ void SemicolonMainPanel_setRailVisible(SemicolonState *semicolonState, bool isVi
         || (*semicolonState).isRailVisible == isVisible)
         return;
     if (isVisible) {
-        size_t restoredWidth = (*semicolonState).railRestoreWidth >= SEMICOLON_V2_RAIL_MIN_WIDTH
+        bytes restoredWidth = (*semicolonState).railRestoreWidth >= SEMICOLON_V2_RAIL_MIN_WIDTH
                              ? (*semicolonState).railRestoreWidth : SEMICOLON_V2_RAIL_DEFAULT_WIDTH;
-        size_t maximumAllowed = (*semicolonState).terminalWidth > 25u ? (*semicolonState).terminalWidth - 25u : SEMICOLON_V2_RAIL_MIN_WIDTH;
+        bytes maximumAllowed = (*semicolonState).terminalWidth > 25u ? (*semicolonState).terminalWidth - 25u : SEMICOLON_V2_RAIL_MIN_WIDTH;
         if (restoredWidth > maximumAllowed)
             restoredWidth = maximumAllowed;
         if (!TerminalPanel_setAnchor((*semicolonState).rootMainPanel, (*semicolonState).railChildId,
@@ -437,7 +437,7 @@ void SemicolonMainPanel_setRailVisible(SemicolonState *semicolonState, bool isVi
     SemicolonHeader_syncTabs(semicolonState);
 }
 
-bool SemicolonState_switchTab(SemicolonState *semicolonState, size_t tabIndex) {
+bool SemicolonState_switchTab(SemicolonState *semicolonState, bytes tabIndex) {
     if (semicolonState == nullptr || tabIndex >= (*semicolonState).tabCount)
         return false;
     (*semicolonState).activeTabIndex = tabIndex;
@@ -453,13 +453,13 @@ bool SemicolonState_switchTab(SemicolonState *semicolonState, size_t tabIndex) {
     return true;
 }
 
-bool SemicolonState_closeTab(SemicolonState *semicolonState, size_t tabIndex) {
+bool SemicolonState_closeTab(SemicolonState *semicolonState, bytes tabIndex) {
     if (semicolonState == nullptr || tabIndex >= (*semicolonState).tabCount)
         return false;
     if ((*semicolonState).tabCount <= 1u)
         return true;
 
-    size_t nextActive = (*semicolonState).activeTabIndex;
+    bytes nextActive = (*semicolonState).activeTabIndex;
     if (tabIndex == (*semicolonState).activeTabIndex) {
         nextActive = tabIndex + 1u < (*semicolonState).tabCount ? tabIndex : tabIndex - 1u;
     } else if (tabIndex < (*semicolonState).activeTabIndex) {
@@ -492,7 +492,7 @@ bool SemicolonState_openFile(SemicolonState *semicolonState, const char *filePat
     if (semicolonState == nullptr || filePath == nullptr || *filePath == '\0')
         return false;
 
-    for (size_t tabIndex = 0u; tabIndex < (*semicolonState).tabCount; ++tabIndex) {
+    for (bytes tabIndex = 0u; tabIndex < (*semicolonState).tabCount; ++tabIndex) {
         if (strcmp((*semicolonState).tabs[tabIndex].tabPath, filePath) == 0) {
             return SemicolonState_switchTab(semicolonState, tabIndex);
         }
@@ -505,7 +505,7 @@ bool SemicolonState_openFile(SemicolonState *semicolonState, const char *filePat
     SemicolonFooter_updateBreadcrumb(semicolonState, filePath);
 
     if ((*semicolonState).tabCount < SEMICOLON_V2_MAX_TABS) {
-        size_t newIndex = (*semicolonState).tabCount;
+        bytes newIndex = (*semicolonState).tabCount;
         (*semicolonState).tabCount += 1u;
         (*semicolonState).activeTabIndex = newIndex;
         (void) snprintf((*semicolonState).tabs[newIndex].tabLabel, sizeof (*semicolonState).tabs[newIndex].tabLabel,
@@ -514,7 +514,7 @@ bool SemicolonState_openFile(SemicolonState *semicolonState, const char *filePat
                         "%s", filePath);
         (*semicolonState).tabs[newIndex].isPreviewMode = (*semicolonState).isMarkdownFile;
     } else {
-        size_t activeIdx = (*semicolonState).activeTabIndex;
+        bytes activeIdx = (*semicolonState).activeTabIndex;
         (void) snprintf((*semicolonState).tabs[activeIdx].tabLabel, sizeof (*semicolonState).tabs[activeIdx].tabLabel,
                         "%s", (*semicolonState).openFileName);
         (void) snprintf((*semicolonState).tabs[activeIdx].tabPath, sizeof (*semicolonState).tabs[activeIdx].tabPath,
@@ -530,14 +530,14 @@ bool SemicolonState_openFile(SemicolonState *semicolonState, const char *filePat
 void SemicolonMainPanel_paintSplitter(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas, bool isHovered) {
     if (semicolonState == nullptr || terminalCanvas == nullptr)
         return;
-    size_t canvasWidth = TerminalCanvas_getWidth(terminalCanvas);
-    size_t canvasHeight = TerminalCanvas_getHeight(terminalCanvas);
+    bytes canvasWidth = TerminalCanvas_getWidth(terminalCanvas);
+    bytes canvasHeight = TerminalCanvas_getHeight(terminalCanvas);
     if (canvasHeight < 5u || canvasWidth == 0u)
         return;
 
-    size_t middleRowY = canvasHeight / 2u;
+    bytes middleRowY = canvasHeight / 2u;
     if (!(*semicolonState).isRailVisible) {
-        for (size_t yIndex = middleRowY - 1u; yIndex <= middleRowY + 1u; ++yIndex) {
+        for (bytes yIndex = middleRowY - 1u; yIndex <= middleRowY + 1u; ++yIndex) {
             TerminalCanvas_text(terminalCanvas, 0u, yIndex, "|", 1u,
                                 TerminalPen_3(TERMINAL_STYLE_BOLD, (*semicolonState).themeAccentColor,
                                               TERMINAL_COLOR_DEFAULT));
@@ -548,16 +548,16 @@ void SemicolonMainPanel_paintSplitter(SemicolonState *semicolonState, TerminalCa
     if (!isHovered || (*semicolonState).railPanelWidth == 0u || (*semicolonState).railPanelWidth >= canvasWidth)
         return;
 
-    size_t dividerColumnX = (*semicolonState).railPanelWidth;
-    for (size_t yIndex = middleRowY - 1u; yIndex <= middleRowY + 1u && yIndex + 1u < canvasHeight; ++yIndex) {
+    bytes dividerColumnX = (*semicolonState).railPanelWidth;
+    for (bytes yIndex = middleRowY - 1u; yIndex <= middleRowY + 1u && yIndex + 1u < canvasHeight; ++yIndex) {
         TerminalCanvas_text(terminalCanvas, dividerColumnX, yIndex, "|", 1u,
                             TerminalPen_3(TERMINAL_STYLE_NONE, TERMINAL_RGB(0x55, 0x58, 0x62),
                                           TERMINAL_COLOR_DEFAULT));
     }
 }
 
-static void SemicolonCache_pathFor(const char *rootDirectory, char *destinationBuffer, size_t destinationCapacity) {
-    uint64_t hashValue = 1469598103934665603ull;
+static void SemicolonCache_pathFor(const char *rootDirectory, char *destinationBuffer, bytes destinationCapacity) {
+    u64 hashValue = 1469598103934665603ull;
     for (const char *cursorPointer = rootDirectory; *cursorPointer != '\0'; ++cursorPointer) {
         hashValue ^= (unsigned char) *cursorPointer;
         hashValue *= 1099511628211ull;
@@ -615,7 +615,7 @@ void SemicolonCache_load(SemicolonState *semicolonState, const char *rootDirecto
     bool isSameRoot = false;
     char cachedOpenPath[SEMICOLON_V2_MAX_PATH];
     cachedOpenPath[0] = '\0';
-    size_t cachedRailWidth = 0u;
+    bytes cachedRailWidth = 0u;
     bool cachedRailHidden = false;
     bool cachedRailCustom = false;
     bool cachedMarkdownPreview = false;
@@ -631,7 +631,7 @@ void SemicolonCache_load(SemicolonState *semicolonState, const char *rootDirecto
             cachedMarkdownPreview = (strtoul(lineBuffer + 17, nullptr, 10) != 0);
             cachedMarkdownValid = true;
         } else if (strncmp(lineBuffer, "rail ", 5) == 0) {
-            cachedRailWidth = (size_t) strtoul(lineBuffer + 5, nullptr, 10);
+            cachedRailWidth = (bytes) strtoul(lineBuffer + 5, nullptr, 10);
         } else if (strncmp(lineBuffer, "rail-custom ", 12) == 0) {
             cachedRailCustom = (strtoul(lineBuffer + 12, nullptr, 10) != 0);
         } else if (strncmp(lineBuffer, "hidden ", 7) == 0) {
@@ -686,7 +686,7 @@ void SemicolonCache_save(const SemicolonState *semicolonState) {
     fprintf(fileHandle, "open %s\n", (*semicolonState).openFilePath);
     fprintf(fileHandle, "markdown-preview %d\n",
             ((*semicolonState).isMarkdownFile && (*semicolonState).isMarkdownPreview) ? 1 : 0);
-    size_t saveRailWidth = (*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth
+    bytes saveRailWidth = (*semicolonState).isRailVisible ? (*semicolonState).railPanelWidth
                                                            : (*semicolonState).railRestoreWidth;
     fprintf(fileHandle, "rail %zu\n", saveRailWidth);
     fprintf(fileHandle, "rail-custom %d\n", (*semicolonState).isRailWidthCustomized ? 1 : 0);
@@ -703,22 +703,22 @@ void SemicolonCache_save(const SemicolonState *semicolonState) {
     }
 }
 
-size_t SemicolonState_getTerminalWidth(const SemicolonState *semicolonState) {
+bytes SemicolonState_getTerminalWidth(const SemicolonState *semicolonState) {
     return semicolonState != nullptr ? (*semicolonState).terminalWidth : 0u;
 }
 
-size_t SemicolonState_getTerminalHeight(const SemicolonState *semicolonState) {
+bytes SemicolonState_getTerminalHeight(const SemicolonState *semicolonState) {
     return semicolonState != nullptr ? (*semicolonState).terminalHeight : 0u;
 }
 
-void SemicolonState_setTerminalDimensions(SemicolonState *semicolonState, size_t terminalWidth, size_t terminalHeight) {
+void SemicolonState_setTerminalDimensions(SemicolonState *semicolonState, bytes terminalWidth, bytes terminalHeight) {
     if (semicolonState == nullptr)
         return;
     (*semicolonState).terminalWidth = terminalWidth;
     (*semicolonState).terminalHeight = terminalHeight;
 }
 
-size_t SemicolonState_getScrollTop(const SemicolonState *semicolonState) {
+bytes SemicolonState_getScrollTop(const SemicolonState *semicolonState) {
     if (semicolonState == nullptr)
         return 0u;
     if ((*semicolonState).isMarkdownFile && (*semicolonState).isMarkdownPreview
@@ -728,7 +728,7 @@ size_t SemicolonState_getScrollTop(const SemicolonState *semicolonState) {
     return (*semicolonState).editorScrollTop;
 }
 
-size_t SemicolonState_getScrollLeft(const SemicolonState *semicolonState) {
+bytes SemicolonState_getScrollLeft(const SemicolonState *semicolonState) {
     if (semicolonState == nullptr)
         return 0u;
     if ((*semicolonState).isMarkdownFile && (*semicolonState).isMarkdownPreview
@@ -738,7 +738,7 @@ size_t SemicolonState_getScrollLeft(const SemicolonState *semicolonState) {
     return (*semicolonState).editorScrollLeft;
 }
 
-void SemicolonState_setScrollTop(SemicolonState *semicolonState, size_t scrollTop) {
+void SemicolonState_setScrollTop(SemicolonState *semicolonState, bytes scrollTop) {
     if (semicolonState == nullptr)
         return;
     (*semicolonState).editorScrollTop = scrollTop;
@@ -748,7 +748,7 @@ void SemicolonState_setScrollTop(SemicolonState *semicolonState, size_t scrollTo
     }
 }
 
-void SemicolonState_setScrollLeft(SemicolonState *semicolonState, size_t scrollLeft) {
+void SemicolonState_setScrollLeft(SemicolonState *semicolonState, bytes scrollLeft) {
     if (semicolonState == nullptr)
         return;
     (*semicolonState).editorScrollLeft = scrollLeft;
@@ -768,14 +768,14 @@ void SemicolonState_scrollVertical(SemicolonState *semicolonState, int64_t delta
         return;
     }
     if (deltaRows < 0) {
-        size_t absRows = (size_t) (-deltaRows);
+        bytes absRows = (bytes) (-deltaRows);
         if ((*semicolonState).editorScrollTop <= absRows)
             (*semicolonState).editorScrollTop = 0u;
         else
             (*semicolonState).editorScrollTop -= absRows;
     } else {
-        size_t absRows = (size_t) deltaRows;
-        size_t maxRows = (*semicolonState).fileLineCount > 0u ? (*semicolonState).fileLineCount - 1u : 0u;
+        bytes absRows = (bytes) deltaRows;
+        bytes maxRows = (*semicolonState).fileLineCount > 0u ? (*semicolonState).fileLineCount - 1u : 0u;
         if ((*semicolonState).editorScrollTop + absRows >= maxRows)
             (*semicolonState).editorScrollTop = maxRows;
         else
@@ -793,13 +793,13 @@ void SemicolonState_scrollHorizontal(SemicolonState *semicolonState, int64_t del
         return;
     }
     if (deltaColumns < 0) {
-        size_t absCols = (size_t) (-deltaColumns);
+        bytes absCols = (bytes) (-deltaColumns);
         if ((*semicolonState).editorScrollLeft <= absCols)
             (*semicolonState).editorScrollLeft = 0u;
         else
             (*semicolonState).editorScrollLeft -= absCols;
     } else {
-        size_t absCols = (size_t) deltaColumns;
+        bytes absCols = (bytes) deltaColumns;
         (*semicolonState).editorScrollLeft += absCols;
     }
 }
@@ -819,24 +819,24 @@ void SemicolonState_scrollToBottom(SemicolonState *semicolonState) {
         return;
     if ((*semicolonState).isMarkdownFile && (*semicolonState).isMarkdownPreview
         && (*semicolonState).markdownView != nullptr) {
-        size_t maxScroll = TerminalMarkdownView_maxScroll((*semicolonState).markdownView);
+        bytes maxScroll = TerminalMarkdownView_maxScroll((*semicolonState).markdownView);
         (void) TerminalMarkdownView_setScroll((*semicolonState).markdownView, maxScroll);
         (*semicolonState).editorScrollTop = maxScroll;
         return;
     }
-    size_t maxRows = (*semicolonState).fileLineCount > 0u ? (*semicolonState).fileLineCount - 1u : 0u;
+    bytes maxRows = (*semicolonState).fileLineCount > 0u ? (*semicolonState).fileLineCount - 1u : 0u;
     (*semicolonState).editorScrollTop = maxRows;
 }
 
-size_t SemicolonState_getRailWidth(const SemicolonState *semicolonState) {
+bytes SemicolonState_getRailWidth(const SemicolonState *semicolonState) {
     return semicolonState != nullptr ? (*semicolonState).railPanelWidth : 0u;
 }
 
-size_t SemicolonState_getRailRestoreWidth(const SemicolonState *semicolonState) {
+bytes SemicolonState_getRailRestoreWidth(const SemicolonState *semicolonState) {
     return semicolonState != nullptr ? (*semicolonState).railRestoreWidth : 0u;
 }
 
-void SemicolonState_setRailWidth(SemicolonState *semicolonState, size_t railWidth) {
+void SemicolonState_setRailWidth(SemicolonState *semicolonState, bytes railWidth) {
     if (semicolonState == nullptr)
         return;
     SemicolonMainPanel_setRailWidth(semicolonState, railWidth);
@@ -911,11 +911,11 @@ void SemicolonState_setNerdIcons(SemicolonState *semicolonState, bool isNerdIcon
     (*semicolonState).isNerdIcons = isNerdIcons;
 }
 
-uint32_t SemicolonState_getThemeAccentColor(const SemicolonState *semicolonState) {
+u32 SemicolonState_getThemeAccentColor(const SemicolonState *semicolonState) {
     return semicolonState != nullptr ? (*semicolonState).themeAccentColor : 0u;
 }
 
-void SemicolonState_setThemeAccentColor(SemicolonState *semicolonState, uint32_t accentColor) {
+void SemicolonState_setThemeAccentColor(SemicolonState *semicolonState, u32 accentColor) {
     if (semicolonState == nullptr)
         return;
     (*semicolonState).themeAccentColor = accentColor;
@@ -944,15 +944,15 @@ void SemicolonState_toggleMarkdownPreview(SemicolonState *semicolonState) {
     SemicolonState_setMarkdownPreview(semicolonState, !(*semicolonState).isMarkdownPreview);
 }
 
-size_t SemicolonState_getFileLineCount(const SemicolonState *semicolonState) {
+bytes SemicolonState_getFileLineCount(const SemicolonState *semicolonState) {
     return semicolonState != nullptr ? (*semicolonState).fileLineCount : 0u;
 }
 
-size_t SemicolonState_getTabCount(const SemicolonState *semicolonState) {
+bytes SemicolonState_getTabCount(const SemicolonState *semicolonState) {
     return semicolonState != nullptr ? (*semicolonState).tabCount : 0u;
 }
 
-size_t SemicolonState_getActiveTabIndex(const SemicolonState *semicolonState) {
+bytes SemicolonState_getActiveTabIndex(const SemicolonState *semicolonState) {
     return semicolonState != nullptr ? (*semicolonState).activeTabIndex : 0u;
 }
 

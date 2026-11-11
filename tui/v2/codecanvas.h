@@ -12,17 +12,17 @@
 TerminalPanel *createCodePanel(SemicolonState *semicolonState);
 
 bool SemicolonCode_loadFile(SemicolonState *semicolonState, const char *filePath);
-void SemicolonCode_syncVisibleRows(SemicolonState *semicolonState, size_t firstLineIndex,
-                                   size_t leftColumnIndex, size_t visibleRowCount);
+void SemicolonCode_syncVisibleRows(SemicolonState *semicolonState, bytes firstLineIndex,
+                                   bytes leftColumnIndex, bytes visibleRowCount);
 void SemicolonCode_paintSyntax(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas,
-                               size_t firstLineIndex, size_t leftColumnIndex);
+                               bytes firstLineIndex, bytes leftColumnIndex);
 void SemicolonCode_paintCursor(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas,
-                               size_t firstLineIndex, size_t leftColumnIndex);
+                               bytes firstLineIndex, bytes leftColumnIndex);
 void SemicolonCode_paintMarkdownPreview(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas);
-size_t SemicolonCode_visibleRows(size_t terminalHeight);
-size_t SemicolonCode_lineNumberWidth(size_t lineCount);
+bytes SemicolonCode_visibleRows(bytes terminalHeight);
+bytes SemicolonCode_lineNumberWidth(bytes lineCount);
 bool SemicolonCode_isMarkdownFile(const char *fileName);
 bool SemicolonCode_setMarkdownMode(SemicolonState *semicolonState, bool isPreviewMode);
-bool SemicolonCode_handleActionClick(SemicolonState *semicolonState, size_t clickX, size_t clickY);
+bool SemicolonCode_handleActionClick(SemicolonState *semicolonState, bytes clickX, bytes clickY);
 
 #endif

@@ -20,16 +20,16 @@
 #define SEMICOLON_V2_MAX_HEIGHT 80u
 #define SEMICOLON_V2_MAX_CELLS (SEMICOLON_V2_MAX_WIDTH * SEMICOLON_V2_MAX_HEIGHT)
 
-static uint32_t gBackCells[SEMICOLON_V2_MAX_CELLS];
-static uint16_t gBackStyles[SEMICOLON_V2_MAX_CELLS];
-static uint32_t gBackForeground[SEMICOLON_V2_MAX_CELLS];
-static uint32_t gBackBackground[SEMICOLON_V2_MAX_CELLS];
-static uint32_t gFrontCells[SEMICOLON_V2_MAX_CELLS];
-static uint16_t gFrontStyles[SEMICOLON_V2_MAX_CELLS];
-static uint32_t gFrontForeground[SEMICOLON_V2_MAX_CELLS];
-static uint32_t gFrontBackground[SEMICOLON_V2_MAX_CELLS];
+static u32 gBackCells[SEMICOLON_V2_MAX_CELLS];
+static u16 gBackStyles[SEMICOLON_V2_MAX_CELLS];
+static u32 gBackForeground[SEMICOLON_V2_MAX_CELLS];
+static u32 gBackBackground[SEMICOLON_V2_MAX_CELLS];
+static u32 gFrontCells[SEMICOLON_V2_MAX_CELLS];
+static u16 gFrontStyles[SEMICOLON_V2_MAX_CELLS];
+static u32 gFrontForeground[SEMICOLON_V2_MAX_CELLS];
+static u32 gFrontBackground[SEMICOLON_V2_MAX_CELLS];
 
-static int colorIndex(uint32_t color) {
+static int colorIndex(u32 color) {
     static const int levels[] = { 0, 95, 135, 175, 215, 255 };
     int red = TERMINAL_COLOR_RED(color);
     int green = TERMINAL_COLOR_GREEN(color);
@@ -54,18 +54,18 @@ static int colorIndex(uint32_t color) {
     return grayDistance < cubeDistance ? grayIndex : cube;
 }
 
-static short colorPair(uint32_t foreground, uint32_t background) {
-    static uint32_t keysFg[64];
-    static uint32_t keysBg[64];
+static short colorPair(u32 foreground, u32 background) {
+    static u32 keysFg[64];
+    static u32 keysBg[64];
     static short values[64];
-    static size_t count;
-    uint32_t fg = TERMINAL_COLOR_IS_SET(foreground) ? foreground : 0u;
-    uint32_t bg = TERMINAL_COLOR_IS_SET(background) ? background : 0u;
-    for (size_t index = 0u; index < count; ++index)
+    static bytes count;
+    u32 fg = TERMINAL_COLOR_IS_SET(foreground) ? foreground : 0u;
+    u32 bg = TERMINAL_COLOR_IS_SET(background) ? background : 0u;
+    for (bytes index = 0u; index < count; ++index)
         if (keysFg[index] == fg && keysBg[index] == bg)
             return values[index];
 
-    if (count >= 64u || count + 1u >= (size_t) COLOR_PAIRS)
+    if (count >= 64u || count + 1u >= (bytes) COLOR_PAIRS)
         return 0;
 
     short pair = (short) (count + 1u);
@@ -96,7 +96,7 @@ static short colorPair(uint32_t foreground, uint32_t background) {
  * LIFETIME: create panel, create screen/surface, render; endwin, then free panel.
  * ======================================================================== */
 
-static attr_t terminalAttributes(uint16_t style) {
+static attr_t terminalAttributes(u16 style) {
     attr_t attributes = A_NORMAL;
     if ((style & TERMINAL_STYLE_BOLD) != 0u || (style & TERMINAL_STYLE_ACCENT) != 0u)
         attributes |= A_BOLD;
@@ -117,21 +117,21 @@ static bool presentRun(void *context, TerminalRun run) {
         || run.x + run.length > SEMICOLON_V2_MAX_WIDTH || run.y >= SEMICOLON_V2_MAX_HEIGHT)
         return false;
 
-    for (size_t index = 0u; index < run.length; ++index) {
-        uint32_t codepoint = run.cells[index];
+    for (bytes index = 0u; index < run.length; ++index) {
+        u32 codepoint = run.cells[index];
         if (codepoint == 0u)
             continue;
         wchar_t glyph[2] = { (wchar_t) codepoint, L'\0' };
         cchar_t cell;
-        uint16_t style = run.styles == nullptr ? TERMINAL_STYLE_NONE : run.styles[index];
-        uint32_t fg = run.fg == nullptr ? TERMINAL_COLOR_DEFAULT : run.fg[index];
-        uint32_t bg = run.bg == nullptr ? TERMINAL_COLOR_DEFAULT : run.bg[index];
+        u16 style = run.styles == nullptr ? TERMINAL_STYLE_NONE : run.styles[index];
+        u32 fg = run.fg == nullptr ? TERMINAL_COLOR_DEFAULT : run.fg[index];
+        u32 bg = run.bg == nullptr ? TERMINAL_COLOR_DEFAULT : run.bg[index];
         short pair = has_colors() ? colorPair(fg, bg) : 0;
         if (setcchar(&cell, glyph, terminalAttributes(style), pair, nullptr) == ERR)
             return false;
         int written = mvadd_wch((int) run.y, (int) (run.x + index), &cell);
-        bool terminalBottomRight = run.y == (size_t) (LINES - 1)
-            && run.x + index == (size_t) (COLS - 1);
+        bool terminalBottomRight = run.y == (bytes) (LINES - 1)
+            && run.x + index == (bytes) (COLS - 1);
         if (written == ERR && !terminalBottomRight)
             return false;
     }
@@ -158,16 +158,16 @@ static bool renderPreview(TerminalPanel *root, TerminalSurface *surface) {
         return false;
     }
 
-    size_t cellCount = (size_t) width * (size_t) height;
+    bytes cellCount = (bytes) width * (bytes) height;
     memset(gFrontCells, 0, cellCount * sizeof gFrontCells[0]);
     memset(gFrontStyles, 0, cellCount * sizeof gFrontStyles[0]);
     memset(gFrontForeground, 0, cellCount * sizeof gFrontForeground[0]);
     memset(gFrontBackground, 0, cellCount * sizeof gFrontBackground[0]);
 
     TerminalCanvas back = TerminalCanvas(gBackCells, gBackStyles, gBackForeground,
-                                         gBackBackground, (size_t) width, (size_t) height);
+                                         gBackBackground, (bytes) width, (bytes) height);
     TerminalCanvas front = TerminalCanvas(gFrontCells, gFrontStyles, gFrontForeground,
-                                          gFrontBackground, (size_t) width, (size_t) height);
+                                          gFrontBackground, (bytes) width, (bytes) height);
     TerminalCanvas_fill(&back, ' ', TerminalPen());
     TerminalPanel_paint(root, &back);
 
