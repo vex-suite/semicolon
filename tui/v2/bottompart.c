@@ -1,8 +1,8 @@
+#include "vex.h"
 #include "tui/v2/bottompart.h"
 #include "tui/v2/palette.h"
 #include "ui/text/terminal_breadcrumb.h"
 #include "format/terminal_style.h"
-#include "annotation/annotation.h"
 
 #include <stdio.h>
 #include <string.h>

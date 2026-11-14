@@ -1,4 +1,6 @@
-#define _XOPEN_SOURCE_EXTENDED 1
+#define XOPEN_SOURCE_EXTENDED 1
+
+#include "vex.h"
 #include "ui/panel/terminal_panel.h"
 #include "ui/text/terminal_text.h"
 #include "ui/panel/terminal_anchor.h"
@@ -10,19 +12,14 @@
 #include "events/terminal_input.h"
 #include "ui/markdown/terminal_markdown_view.h"
 #include "ui/scroll/terminal_scroll_glide.h"
-#include "../../re/clipboard/clipboard.h"
-#include "nio/mem.h"
-#include "oop/type.h"
+#include "re.h"
+#include "oop/oop.h"
 #include "editor/semicolon_syntax.h"
 #include "icon/icon_catalog.h"
-#include "exception/throw.h"
-#include "annotation/annotation.h"
-#include "lifetime/lifetime/platform.h"
+
 #include <locale.h>
 #include <limits.h>
-#include <wchar.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,7 +32,6 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <strings.h>
-#include <time.h>
 #include <termios.h>
 #include <unistd.h>
 #include <ncurses.h>

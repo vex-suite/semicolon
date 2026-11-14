@@ -1,4 +1,6 @@
 #define _XOPEN_SOURCE_EXTENDED 1
+
+#include "vex.h"
 #include "tui/v2/mainpanel.h"
 #include "tui/v2/filetree.h"
 #include "tui/v2/codecanvas.h"
@@ -13,16 +15,12 @@
 #include "../../re/clipboard/clipboard.h"
 #include "system/browser.h"
 #include "nio/mem.h"
-#include "oop/type.h"
-#include "exception/throw.h"
-#include "annotation/annotation.h"
+#include "oop/oop.h"
 
 #include <locale.h>
 #include <limits.h>
 #include <dirent.h>
 #include <ncurses.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

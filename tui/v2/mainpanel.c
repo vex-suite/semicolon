@@ -1,12 +1,12 @@
+#include "vex.h"
 #include "tui/v2/mainpanel.h"
 #include "tui/v2/bottompart.h"
 #include "tui/v2/codecanvas.h"
 #include "tui/v2/filetree.h"
 #include "tui/v2/palette.h"
 #include "nio/mem.h"
-#include "oop/type.h"
+#include "oop/oop.h"
 #include "format/terminal_style.h"
-#include "annotation/annotation.h"
 #include "lifetime/lifetime/platform.h"
 
 #include <errno.h>

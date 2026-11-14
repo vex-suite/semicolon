@@ -1,15 +1,16 @@
 #ifndef SEMICOLON_EDITOR_SEMICOLON_SYNTAX_H
 #define SEMICOLON_EDITOR_SEMICOLON_SYNTAX_H
 
+#include "vex.h"
 #include "ui/surface/terminal_canvas.h"
 #include "syntax/role.h"
 
 typedef struct SemicolonSyntax SemicolonSyntax;
 
-SemicolonSyntax *SemicolonSyntax_0(void);
+SemicolonSyntax *SemicolonSyntax_0();
 #define SemicolonSyntax() SemicolonSyntax_0()
 #define SemicolonSyntax_zero() SemicolonSyntax_0()
-void SemicolonSyntax_free(SemicolonSyntax *self);
+fn SemicolonSyntax_free(SemicolonSyntax *self);
 // Cold copy/analysis. Lines exclude endings; normalized LF joins preserve line
 // lexical context. Failure preserves the previous snapshot. Caller serialized.
 bool SemicolonSyntax_setLines(SemicolonSyntax *self, const char *const *lines,

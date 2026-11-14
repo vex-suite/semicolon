@@ -1,6 +1,7 @@
 #ifndef SEMICOLON_V2_STATE_H
 #define SEMICOLON_V2_STATE_H
 
+#include "vex.h"
 #include "ui/panel/terminal_panel.h"
 #include "ui/panel/terminal_anchor.h"
 #include "ui/text/terminal_text.h"
@@ -9,9 +10,6 @@
 #include "ui/markdown/terminal_markdown_view.h"
 #include "editor/semicolon_syntax.h"
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <time.h>
 
 #define SEMICOLON_V2_MAX_TABS 16u

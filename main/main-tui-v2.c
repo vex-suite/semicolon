@@ -1,17 +1,15 @@
 #define _XOPEN_SOURCE_EXTENDED 1
+
+#include "vex.h"
 #include "tui/v2/mainpanel.h"
 #include "tui/v2/palette.h"
 
 #include "ui/surface/terminal_canvas.h"
 #include "ui/surface/terminal_surface.h"
 #include "format/terminal_style.h"
-#include "annotation/annotation.h"
-#include "exception/throw.h"
 
 #include <locale.h>
 #include <ncurses.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>

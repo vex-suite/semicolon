@@ -2,6 +2,8 @@
 // Proves edit invalidation, wide/invalid UTF-8 cell mapping, scroll, action-layer
 // preservation and caret position without acquiring a tty or approving appearance.
 #define main semicolon_program_main
+
+#include "vex.h"
 #include "semicolon/main/tui-main.c"
 #undef main
 #include <assert.h>

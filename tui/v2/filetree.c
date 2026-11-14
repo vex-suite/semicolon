@@ -1,10 +1,10 @@
+#include "vex.h"
 #include "tui/v2/filetree.h"
 #include "tui/v2/palette.h"
 #include "icon/icon_catalog.h"
 #include "nio/mem.h"
-#include "oop/type.h"
+#include "oop/oop.h"
 #include "format/terminal_style.h"
-#include "annotation/annotation.h"
 
 #include <dirent.h>
 #include <fnmatch.h>

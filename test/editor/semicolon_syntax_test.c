@@ -1,6 +1,8 @@
 // Owner: copied C23 document coloring, not compiler semantics or appearance.
 // Rows remain caller-owned; every cold failure preserves the prior analysis.
 // One serialized owner: concurrent mutation and backend occupancy are inapplicable.
+
+#include "vex.h"
 #include "editor/semicolon_syntax.h"
 #include <assert.h>
 #include <stdlib.h>

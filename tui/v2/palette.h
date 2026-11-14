@@ -1,6 +1,7 @@
 #ifndef SEMICOLON_V2_PALETTE_H
 #define SEMICOLON_V2_PALETTE_H
 
+#include "vex.h"
 #include "format/terminal_color.h"
 
 // Theme color definitions for Semicolon v2 (Interactables Preferences)

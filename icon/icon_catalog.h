@@ -1,8 +1,7 @@
 #ifndef SEMICOLON_ICON_ICON_CATALOG_H
 #define SEMICOLON_ICON_ICON_CATALOG_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include "vex.h"
 
 typedef struct SemicolonIconEntry {
     const char *format;
