@@ -17,7 +17,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="semicolon-mouse-capture-") as directory:
         project = Path(directory)
         source = project / "hello.c"
-        original = b"int main(void) { return 0; }\n"
+        original = b"int main() { return 0; }\n"
         source.write_bytes(original)
         shell = HELPERS.Pty(
             22, 112,

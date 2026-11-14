@@ -131,8 +131,8 @@ static attr_t SemicolonV2_terminalAttributes(u16 styleFlags) {
     return resultAttributes;
 }
 
-static bool SemicolonV2_presentRun(void *callbackContext, TerminalRun terminalRun) {
-    (void) callbackContext;
+static bool SemicolonV2_presentRun(any callbackContext, TerminalRun terminalRun) {
+    (fn) callbackContext;
     if (terminalRun.cells == nullptr || terminalRun.length > SEMICOLON_V2_MAX_GRID_WIDTH
         || terminalRun.x + terminalRun.length > SEMICOLON_V2_MAX_GRID_WIDTH
         || terminalRun.y >= SEMICOLON_V2_MAX_GRID_HEIGHT)
@@ -173,11 +173,11 @@ static bool SemicolonV2_presentRun(void *callbackContext, TerminalRun terminalRu
     return true;
 }
 
-static void SemicolonV2_frameBracket(void *callbackContext, TerminalPresentPhase presentPhase) {
-    (void) callbackContext;
+static fn SemicolonV2_frameBracket(any callbackContext, TerminalPresentPhase presentPhase) {
+    (fn) callbackContext;
     if (presentPhase == TERMINAL_PRESENT_END) {
-        (void) wnoutrefresh(stdscr);
-        (void) doupdate();
+        (fn) wnoutrefresh(stdscr);
+        (fn) doupdate();
     }
 }
 
@@ -185,7 +185,7 @@ static void SemicolonV2_frameBracket(void *callbackContext, TerminalPresentPhase
 #define TUI_MOUSE_X10 (KEY_MAX + 2)
 #define TUI_MOUSE_SUFFIX_MS 25
 
-static u64 SemicolonV2_monotonicNowNs(void) {
+static u64 SemicolonV2_monotonicNowNs() {
     struct timespec currentTime;
     if (clock_gettime(CLOCK_MONOTONIC, &currentTime) != 0)
         return 0u;
@@ -202,7 +202,7 @@ static bool SemicolonV2_readMouseSuffix(TerminalInput *terminalInput, bool isSgr
     static const char *x10Prefix = "\x1b[M";
     const char *prefixString = isSgrMode ? sgrPrefix : x10Prefix;
     for (bytes byteIndex = 0u; prefixString[byteIndex] != '\0'; ++byteIndex)
-        (void) TerminalInput_feed(terminalInput, (unsigned char) prefixString[byteIndex]);
+        (fn) TerminalInput_feed(terminalInput, (unsigned char) prefixString[byteIndex]);
 
     timeout(TUI_MOUSE_SUFFIX_MS);
     bool isReady = false;
@@ -284,17 +284,17 @@ static bool SemicolonV2_firstFileIn(const char *rootDirectory, char *destination
         if ((*dirItem).d_name[0] == '.' || strlen((*dirItem).d_name) >= sizeof bestFileName)
             continue;
         char childPath[SEMICOLON_V2_MAX_PATH];
-        (void) snprintf(childPath, sizeof childPath, "%s/%s", rootDirectory, (*dirItem).d_name);
+        (fn) snprintf(childPath, sizeof childPath, "%s/%s", rootDirectory, (*dirItem).d_name);
         struct stat fileStat;
         if (stat(childPath, &fileStat) != 0 || !S_ISREG(fileStat.st_mode))
             continue;
         if (bestFileName[0] == '\0' || strcasecmp((*dirItem).d_name, bestFileName) < 0)
-            (void) snprintf(bestFileName, sizeof bestFileName, "%s", (*dirItem).d_name);
+            (fn) snprintf(bestFileName, sizeof bestFileName, "%s", (*dirItem).d_name);
     }
-    (void) closedir(dirHandle);
+    (fn) closedir(dirHandle);
     if (bestFileName[0] == '\0')
         return false;
-    (void) snprintf(destinationBuffer, destinationCapacity, "%s/%s", rootDirectory, bestFileName);
+    (fn) snprintf(destinationBuffer, destinationCapacity, "%s/%s", rootDirectory, bestFileName);
     return true;
 }
 
@@ -324,7 +324,7 @@ static bool SemicolonV2_parseHexColor(const char *hexString, u32 *outColor) {
 }
 
 int main(int argumentCount, char **argumentVector) {
-    (void) setlocale(LC_CTYPE, "");
+    (fn) setlocale(LC_CTYPE, "");
 
     bool isDumpModeRequested = false;
     bool isFileExplicitlyGiven = false;
@@ -365,11 +365,11 @@ int main(int argumentCount, char **argumentVector) {
             continue;
         }
         if (strcmp(currentArgument, "--root") == 0 && argumentIndex + 1 < argumentCount) {
-            (void) snprintf(targetRootDirectory, sizeof targetRootDirectory, "%s", argumentVector[++argumentIndex]);
+            (fn) snprintf(targetRootDirectory, sizeof targetRootDirectory, "%s", argumentVector[++argumentIndex]);
             continue;
         }
         if (strcmp(currentArgument, "--file") == 0 && argumentIndex + 1 < argumentCount) {
-            (void) snprintf(targetFilePath, sizeof targetFilePath, "%s", argumentVector[++argumentIndex]);
+            (fn) snprintf(targetFilePath, sizeof targetFilePath, "%s", argumentVector[++argumentIndex]);
             isFileExplicitlyGiven = true;
             continue;
         }
@@ -379,7 +379,7 @@ int main(int argumentCount, char **argumentVector) {
             continue;
         }
         if (strcmp(currentArgument, "--accent") == 0 && argumentIndex + 1 < argumentCount) {
-            (void) SemicolonV2_parseHexColor(argumentVector[++argumentIndex], &parsedAccentColor);
+            (fn) SemicolonV2_parseHexColor(argumentVector[++argumentIndex], &parsedAccentColor);
             continue;
         }
     }
@@ -393,7 +393,7 @@ int main(int argumentCount, char **argumentVector) {
 
     char resolvedRootPath[SEMICOLON_V2_MAX_PATH];
     if (realpath(targetRootDirectory, resolvedRootPath) != nullptr) {
-        (void) snprintf(targetRootDirectory, sizeof targetRootDirectory, "%s", resolvedRootPath);
+        (fn) snprintf(targetRootDirectory, sizeof targetRootDirectory, "%s", resolvedRootPath);
     }
 
     SemicolonState *semicolonState = SemicolonState_create();
@@ -412,7 +412,7 @@ int main(int argumentCount, char **argumentVector) {
     if (!isFileExplicitlyGiven) {
         const char *cachedFilePath = SemicolonState_getOpenFilePath(semicolonState);
         if (cachedFilePath[0] != '\0' && access(cachedFilePath, R_OK) == 0) {
-            (void) snprintf(targetFilePath, sizeof targetFilePath, "%s", cachedFilePath);
+            (fn) snprintf(targetFilePath, sizeof targetFilePath, "%s", cachedFilePath);
         } else if (!SemicolonV2_firstFileIn(targetRootDirectory, targetFilePath, sizeof targetFilePath)) {
             THROW("smc2: no file found to open in %s; specify --file", targetRootDirectory);
             SemicolonState_destroy(semicolonState);
@@ -425,17 +425,17 @@ int main(int argumentCount, char **argumentVector) {
     bytes homeLength = userHomeDirectory != nullptr ? strlen(userHomeDirectory) : 0u;
     if (homeLength > 0u && strncmp(targetRootDirectory, userHomeDirectory, homeLength) == 0
         && (targetRootDirectory[homeLength] == '/' || targetRootDirectory[homeLength] == '\0')) {
-        (void) snprintf(locationPathBuffer, sizeof locationPathBuffer,
+        (fn) snprintf(locationPathBuffer, sizeof locationPathBuffer,
                         "~%s", targetRootDirectory + homeLength);
     } else {
-        (void) snprintf(locationPathBuffer, sizeof locationPathBuffer,
+        (fn) snprintf(locationPathBuffer, sizeof locationPathBuffer,
                         "%s", targetRootDirectory);
     }
     SemicolonState_setRailLocationPath(semicolonState, locationPathBuffer);
 
-    (void) SemicolonRail_scanDirectory(semicolonState, targetRootDirectory);
-    (void) SemicolonCode_loadFile(semicolonState, targetFilePath);
-    (void) SemicolonRail_revealPath(semicolonState, targetFilePath);
+    (fn) SemicolonRail_scanDirectory(semicolonState, targetRootDirectory);
+    (fn) SemicolonCode_loadFile(semicolonState, targetFilePath);
+    (fn) SemicolonRail_revealPath(semicolonState, targetFilePath);
 
     // Phase 1: Build Objects (Single Object Factory Pattern Law)
     TerminalPanel *mainPanel = createMainPanel(semicolonState);
@@ -498,37 +498,37 @@ int main(int argumentCount, char **argumentVector) {
             return 1;
         }
 
-        (void) set_term(screenInstance);
-        (void) cbreak();
-        (void) noecho();
-        (void) keypad(stdscr, true);
-        (void) curs_set(0);
+        (fn) set_term(screenInstance);
+        (fn) cbreak();
+        (fn) noecho();
+        (fn) keypad(stdscr, true);
+        (fn) curs_set(0);
         if (has_colors()) {
-            (void) start_color();
-            (void) use_default_colors();
+            (fn) start_color();
+            (fn) use_default_colors();
         }
 
-        (void) define_key("\033[<", TUI_MOUSE_SGR);
-        (void) define_key("\033[M", TUI_MOUSE_X10);
-        (void) define_key("\033[A", KEY_UP);
-        (void) define_key("\033[B", KEY_DOWN);
-        (void) define_key("\033[C", KEY_RIGHT);
-        (void) define_key("\033[D", KEY_LEFT);
-        (void) define_key("\033OA", KEY_UP);
-        (void) define_key("\033OB", KEY_DOWN);
-        (void) define_key("\033OC", KEY_RIGHT);
-        (void) define_key("\033OD", KEY_LEFT);
-        (void) define_key("\033[H", KEY_HOME);
-        (void) define_key("\033[F", KEY_END);
-        (void) define_key("\033[1~", KEY_HOME);
-        (void) define_key("\033[4~", KEY_END);
-        (void) define_key("\033[5~", KEY_PPAGE);
-        (void) define_key("\033[6~", KEY_NPAGE);
+        (fn) define_key("\033[<", TUI_MOUSE_SGR);
+        (fn) define_key("\033[M", TUI_MOUSE_X10);
+        (fn) define_key("\033[A", KEY_UP);
+        (fn) define_key("\033[B", KEY_DOWN);
+        (fn) define_key("\033[C", KEY_RIGHT);
+        (fn) define_key("\033[D", KEY_LEFT);
+        (fn) define_key("\033OA", KEY_UP);
+        (fn) define_key("\033OB", KEY_DOWN);
+        (fn) define_key("\033OC", KEY_RIGHT);
+        (fn) define_key("\033OD", KEY_LEFT);
+        (fn) define_key("\033[H", KEY_HOME);
+        (fn) define_key("\033[F", KEY_END);
+        (fn) define_key("\033[1~", KEY_HOME);
+        (fn) define_key("\033[4~", KEY_END);
+        (fn) define_key("\033[5~", KEY_PPAGE);
+        (fn) define_key("\033[6~", KEY_NPAGE);
 
-        (void) mousemask(0, nullptr);
+        (fn) mousemask(0, nullptr);
         set_escdelay(25);
         timeout(50);
-        (void) SemicolonV2_setMouseReporting(true);
+        (fn) SemicolonV2_setMouseReporting(true);
 
         TerminalSurface terminalSurface = TerminalSurface();
         TerminalInput terminalInput = TerminalInput_0();
@@ -547,7 +547,7 @@ int main(int argumentCount, char **argumentVector) {
             if (markdownCopiedUntilNs != 0u && SemicolonV2_monotonicNowNs() >= markdownCopiedUntilNs) {
                 TerminalMarkdownView *markdownView = SemicolonState_getMarkdownView(semicolonState);
                 if (markdownView != nullptr)
-                    (void) TerminalMarkdownView_setCopied(markdownView, markdownCopiedBlock, false);
+                    (fn) TerminalMarkdownView_setCopied(markdownView, markdownCopiedBlock, false);
                 markdownCopiedUntilNs = 0u;
                 markdownCopiedBlock = SIZE_MAX;
             }
@@ -563,7 +563,7 @@ int main(int argumentCount, char **argumentVector) {
                 break;
 
             if (inputKeyCode == KEY_RESIZE) {
-                (void) clearok(stdscr, true);
+                (fn) clearok(stdscr, true);
                 continue;
             }
 
@@ -598,7 +598,7 @@ int main(int argumentCount, char **argumentVector) {
                                 && pointerEvent.y >= contentY && pointerEvent.y < terminalHeight - 1u) {
                                 bytes documentRow = TerminalMarkdownView_getScroll(markdownView) + (pointerEvent.y - contentY);
                                 bytes documentCol = TerminalMarkdownView_rowScrollX(markdownView, documentRow) + (pointerEvent.x - contentX);
-                                (void) TerminalMarkdownView_setHover(markdownView, documentRow, documentCol);
+                                (fn) TerminalMarkdownView_setHover(markdownView, documentRow, documentCol);
                             } else if (markdownView != nullptr) {
                                 TerminalMarkdownView_clearHover(markdownView);
                             }
@@ -611,7 +611,7 @@ int main(int argumentCount, char **argumentVector) {
                         if (SemicolonState_isRailVisible(semicolonState) && pointerEvent.x < seamColumn) {
                             TerminalTreeView *treeView = SemicolonState_getTreeView(semicolonState);
                             if (treeView != nullptr)
-                                (void) TerminalTreeView_scrollBy(treeView, isDown ? 1 : -1);
+                                (fn) TerminalTreeView_scrollBy(treeView, isDown ? 1 : -1);
                         } else if (pointerEvent.shift || pointerEvent.meta || pointerEvent.ctrl) {
                             SemicolonState_scrollHorizontal(semicolonState, isDown ? 4 : -4);
                         } else {
@@ -655,9 +655,9 @@ int main(int argumentCount, char **argumentVector) {
                             if (SemicolonState_isRailVisible(semicolonState) && pointerEvent.x < seamColumn) {
                                 TerminalTreeView *treeView = SemicolonState_getTreeView(semicolonState);
                                 if (treeView != nullptr)
-                                    (void) TerminalTreeView_setScrollRow(treeView, 0u);
+                                    (fn) TerminalTreeView_setScrollRow(treeView, 0u);
                             } else {
-                                (void) SemicolonHeader_handleTabClick(semicolonState, pointerEvent.x, pointerEvent.button);
+                                (fn) SemicolonHeader_handleTabClick(semicolonState, pointerEvent.x, pointerEvent.button);
                             }
                             break;
                         }
@@ -678,7 +678,7 @@ int main(int argumentCount, char **argumentVector) {
                         // 6. Breadcrumb in footer row
                         if (pointerEvent.y + 1u == SemicolonState_getTerminalHeight(semicolonState)) {
                             if (pointerEvent.x >= 12u && pointerEvent.x < 12u + 44u) {
-                                (void) SemicolonRail_revealPath(semicolonState, SemicolonState_getOpenFilePath(semicolonState));
+                                (fn) SemicolonRail_revealPath(semicolonState, SemicolonState_getOpenFilePath(semicolonState));
                             }
                             break;
                         }
@@ -703,8 +703,8 @@ int main(int argumentCount, char **argumentVector) {
                                         if (copyBuffer != nullptr) {
                                             bytes bytesWritten = 0u;
                                             if (TerminalMarkdownView_copyBlock(markdownView, action.block, copyBuffer, 65536u, &bytesWritten) && bytesWritten > 0u) {
-                                                (void) Clipboard_setText(copyBuffer);
-                                                (void) TerminalMarkdownView_setCopied(markdownView, action.block, true);
+                                                (fn) Clipboard_setText(copyBuffer);
+                                                (fn) TerminalMarkdownView_setCopied(markdownView, action.block, true);
                                                 markdownCopiedBlock = action.block;
                                                 markdownCopiedUntilNs = SemicolonV2_monotonicNowNs() + 2000000000ULL;
                                             }
@@ -721,27 +721,27 @@ int main(int argumentCount, char **argumentVector) {
                                                          || strncmp(targetUrl, "mailto:", 7) == 0
                                                          || strncmp(targetUrl, "ftp://", 6) == 0);
                                         if (isWebUrl) {
-                                            (void) Browser_open(targetUrl);
+                                            (fn) Browser_open(targetUrl);
                                         } else {
                                             const char *currentOpenFilePath = SemicolonState_getOpenFilePath(semicolonState);
                                             char baseDirectory[PATH_MAX];
-                                            (void) snprintf(baseDirectory, sizeof baseDirectory, "%s", currentOpenFilePath != nullptr ? currentOpenFilePath : ".");
+                                            (fn) snprintf(baseDirectory, sizeof baseDirectory, "%s", currentOpenFilePath != nullptr ? currentOpenFilePath : ".");
                                             char *lastSlashPointer = strrchr(baseDirectory, '/');
                                             if (lastSlashPointer != nullptr)
                                                 *lastSlashPointer = '\0';
                                             else
-                                                (void) snprintf(baseDirectory, sizeof baseDirectory, ".");
+                                                (fn) snprintf(baseDirectory, sizeof baseDirectory, ".");
                                             char combinedPath[PATH_MAX * 2];
                                             if (targetUrl[0] == '/') {
-                                                (void) snprintf(combinedPath, sizeof combinedPath, "%s", targetUrl);
+                                                (fn) snprintf(combinedPath, sizeof combinedPath, "%s", targetUrl);
                                             } else {
-                                                (void) snprintf(combinedPath, sizeof combinedPath, "%s/%s", baseDirectory, targetUrl);
+                                                (fn) snprintf(combinedPath, sizeof combinedPath, "%s/%s", baseDirectory, targetUrl);
                                             }
                                             char resolvedPath[PATH_MAX];
                                             if (realpath(combinedPath, resolvedPath) != nullptr) {
-                                                (void) SemicolonState_openFile(semicolonState, resolvedPath);
+                                                (fn) SemicolonState_openFile(semicolonState, resolvedPath);
                                             } else {
-                                                (void) SemicolonState_openFile(semicolonState, combinedPath);
+                                                (fn) SemicolonState_openFile(semicolonState, combinedPath);
                                             }
                                         }
                                         break;
@@ -817,10 +817,10 @@ int main(int argumentCount, char **argumentVector) {
 
         SemicolonCache_save(semicolonState);
 
-        (void) SemicolonV2_setMouseReporting(false);
-        (void) curs_set(1);
-        (void) endwin();
-        (void) delscreen(screenInstance);
+        (fn) SemicolonV2_setMouseReporting(false);
+        (fn) curs_set(1);
+        (fn) endwin();
+        (fn) delscreen(screenInstance);
     }
 
     // Phase 4: Reverse Teardown

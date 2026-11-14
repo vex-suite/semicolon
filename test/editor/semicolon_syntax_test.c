@@ -9,7 +9,7 @@
 static bytes untilFailure = SIZE_MAX;
 static bytes live;
 
-static bool allocationAllowed(void) {
+static bool allocationAllowed() {
     if (untilFailure == SIZE_MAX)
         return true;
     if (untilFailure == 0u)
@@ -18,31 +18,31 @@ static bool allocationAllowed(void) {
     return true;
 }
 
-void *syntax_test_malloc(bytes size) {
-    void *value = allocationAllowed() ? malloc(size) : nullptr;
+any syntax_test_malloc(bytes size) {
+    any value = allocationAllowed() ? malloc(size) : nullptr;
     if (value != nullptr)
         ++live;
     return value;
 }
 
-void *syntax_test_calloc(bytes count, bytes size) {
-    void *value = allocationAllowed() ? calloc(count, size) : nullptr;
+any syntax_test_calloc(bytes count, bytes size) {
+    any value = allocationAllowed() ? calloc(count, size) : nullptr;
     if (value != nullptr)
         ++live;
     return value;
 }
 
-void *syntax_test_realloc(void *old, bytes size) {
+any syntax_test_realloc(any old, bytes size) {
     if (!allocationAllowed())
         return nullptr;
     bool fresh = old == nullptr;
-    void *value = realloc(old, size);
+    any value = realloc(old, size);
     if (fresh && value != nullptr)
         ++live;
     return value;
 }
 
-void syntax_test_free(void *value) {
+fn syntax_test_free(any value) {
     if (value != nullptr) {
         assert(live != 0u);
         --live;
@@ -50,7 +50,7 @@ void syntax_test_free(void *value) {
     free(value);
 }
 
-static void testRows(void) {
+static fn testRows() {
     SemicolonSyntax *syntax = SemicolonSyntax();
     assert(syntax != nullptr);
     char first[] = "int value = 42; /* open";
@@ -111,7 +111,7 @@ static void testRows(void) {
     SemicolonSyntax_free(syntax);
 }
 
-static void testRolesAndComments(void) {
+static fn testRolesAndComments() {
     SemicolonSyntax *syntax = SemicolonSyntax();
     assert(syntax != nullptr);
     char first[] = "u8 Console_log(const char *message); THROW(\"x\");";
@@ -153,7 +153,7 @@ static void testRolesAndComments(void) {
     assert(live == 0u);
 }
 
-static void testPressureAndFailure(void) {
+static fn testPressureAndFailure() {
     // Cross several growable span-directory boundaries, retaining old data while
     // injecting every bridge allocation failure stage. No host-wide exhaustion.
     char large[8192];
@@ -201,7 +201,7 @@ static void testPressureAndFailure(void) {
     assert(live == 0u);
 }
 
-int main(void) {
+int main() {
     testRows();
     assert(live == 0u);
     testRolesAndComments();

@@ -34,7 +34,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="semicolon-run-") as directory, \
             tempfile.TemporaryDirectory(prefix="semicolon-run-state-") as state:
         root = Path(directory)
-        (root / "no-entry.c").write_text("int helper(void) { return 7; }\n")
+        (root / "no-entry.c").write_text("int helper() { return 7; }\n")
         standalone = root / "standalone.c"
         runnable = root / "run.sh"
         runnable.write_text("#!/bin/sh\nprintf 'SEMICOLON_RUN_OUTPUT\\n'\n")
@@ -82,7 +82,7 @@ def main():
             if shell.process.poll() is None:
                 shell.finish()
 
-        standalone.write_text("int main(void) { return 0; }\n")
+        standalone.write_text("int main() { return 0; }\n")
         # This registered Darling test needs the workspace graph's include paths
         # and libraries. Never execute its window: an injected b records argv.
         # The outside fixture must keep the single-source b route.
@@ -152,7 +152,7 @@ def main():
                 "bounded ring/line caps did not report their evictions"
             assert b"exit 0" in settled and b"console-line-10049" in settled, \
                 "completed output did not stay on the console panel"
-            assert b"int main(void)" not in without_styles(settled) and b"  1.  " not in without_styles(settled), \
+            assert b"int main()" not in without_styles(settled) and b"  1.  " not in without_styles(settled), \
                 "editor source or gutter leaked into the console panel"
             scrollback.wheel(80, 7, button=64)
             scrollback.wheel(80, 7, button=64)
@@ -173,7 +173,7 @@ def main():
                 "End did not restore follow-tail after seeking to oldest output"
             scrollback.click(60, 0)
             editor = scrollback.repaint()
-            assert b"int main(void)" in without_styles(editor) and b"omitted 51" not in without_styles(editor), \
+            assert b"int main()" in without_styles(editor) and b"omitted 51" not in without_styles(editor), \
                 "switching back to the file did not restore its independent panel"
             scrollback.click(80, 0)
             assert b"console-line-10049" in scrollback.repaint(), \
@@ -182,7 +182,7 @@ def main():
         finally:
             if scrollback.process.poll() is None:
                 scrollback.finish()
-        assert standalone.read_text() == "int main(void) { return 0; }\n", \
+        assert standalone.read_text() == "int main() { return 0; }\n", \
             "console input contaminated the source buffer"
 
         for name, body, outcome in (

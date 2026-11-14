@@ -111,8 +111,8 @@ static attr_t terminalAttributes(u16 style) {
     return attributes;
 }
 
-static bool presentRun(void *context, TerminalRun run) {
-    (void) context;
+static bool presentRun(any context, TerminalRun run) {
+    (fn) context;
     if (run.cells == nullptr || run.length > SEMICOLON_V2_MAX_WIDTH
         || run.x + run.length > SEMICOLON_V2_MAX_WIDTH || run.y >= SEMICOLON_V2_MAX_HEIGHT)
         return false;
@@ -139,11 +139,11 @@ static bool presentRun(void *context, TerminalRun run) {
     return true;
 }
 
-static void frameBracket(void *context, TerminalPresentPhase phase) {
-    (void) context;
+static fn frameBracket(any context, TerminalPresentPhase phase) {
+    (fn) context;
     if (phase == TERMINAL_PRESENT_END) {
-        (void) wnoutrefresh(stdscr);
-        (void) doupdate();
+        (fn) wnoutrefresh(stdscr);
+        (fn) doupdate();
     }
 }
 
@@ -179,13 +179,13 @@ static bool renderPreview(TerminalPanel *root, TerminalSurface *surface) {
     return result.ok;
 }
 
-static void restoreTerminal(SCREEN *screen) {
+static fn restoreTerminal(SCREEN *screen) {
     if (screen == nullptr)
         return;
 
-    (void) curs_set(1);
-    (void) endwin();
-    (void) delscreen(screen);
+    (fn) curs_set(1);
+    (fn) endwin();
+    (fn) delscreen(screen);
 }
 
 int main(int argc, char **argv) {
@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    (void) setlocale(LC_CTYPE, "");
+    (fn) setlocale(LC_CTYPE, "");
     // Unfinished: the v2 panel tree builder (SemicolonV2MainPanel_create) is not
     // written yet, so the call is parked here and the preview reports it instead
     // of failing to compile. Restore the call when the builder lands.
@@ -216,14 +216,14 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    (void) set_term(screen);
-    (void) cbreak();
-    (void) noecho();
-    (void) keypad(stdscr, true);
-    (void) curs_set(0);
+    (fn) set_term(screen);
+    (fn) cbreak();
+    (fn) noecho();
+    (fn) keypad(stdscr, true);
+    (fn) curs_set(0);
     if (has_colors()) {
-        (void) start_color();
-        (void) use_default_colors();
+        (fn) start_color();
+        (fn) use_default_colors();
     }
 
     TerminalSurface surface = TerminalSurface();
@@ -234,7 +234,7 @@ int main(int argc, char **argv) {
         if (ok)
             key = getch();
         if (key == KEY_RESIZE)
-            (void) clearok(stdscr, true);
+            (fn) clearok(stdscr, true);
     }
 
     restoreTerminal(screen);

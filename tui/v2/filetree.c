@@ -48,7 +48,7 @@ static unsigned SemicolonRail_getFileSortGroup(const char *fileName) {
     return 2u;
 }
 
-static int SemicolonRail_compareDirEntries(const void *leftPointer, const void *rightPointer) {
+static int SemicolonRail_compareDirEntries(const_any leftPointer, const_any rightPointer) {
     const SemicolonDirEntry *firstEntry = (const SemicolonDirEntry*) leftPointer;
     const SemicolonDirEntry *secondEntry = (const SemicolonDirEntry*) rightPointer;
     if ((*firstEntry).isFolder != (*secondEntry).isFolder)
@@ -129,7 +129,7 @@ u32 SemicolonRail_getIconColor(u32 glyphCodepoint) {
     }
 }
 
-static void SemicolonRail_clearGitignore(SemicolonState *semicolonState) {
+static fn SemicolonRail_clearGitignore(SemicolonState *semicolonState) {
     if (semicolonState == nullptr)
         return;
     for (bytes patternIndex = 0u; patternIndex < (*semicolonState).ignorePatternCount; ++patternIndex) {
@@ -196,11 +196,11 @@ static bool SemicolonRail_addGitignorePattern(SemicolonState *semicolonState, co
     return true;
 }
 
-void SemicolonRail_reloadGitignore(SemicolonState *semicolonState) {
+fn SemicolonRail_reloadGitignore(SemicolonState *semicolonState) {
     if (semicolonState == nullptr || (*semicolonState).railRootDirectory[0] == '\0')
         return;
     char gitignorePath[SEMICOLON_V2_MAX_PATH];
-    (void) snprintf(gitignorePath, sizeof gitignorePath, "%s/.gitignore", (*semicolonState).railRootDirectory);
+    (fn) snprintf(gitignorePath, sizeof gitignorePath, "%s/.gitignore", (*semicolonState).railRootDirectory);
 
     struct stat fileStat;
     bool fileExists = stat(gitignorePath, &fileStat) == 0 && S_ISREG(fileStat.st_mode);
@@ -226,7 +226,7 @@ void SemicolonRail_reloadGitignore(SemicolonState *semicolonState) {
         if (!SemicolonRail_addGitignorePattern(semicolonState, lineBuffer))
             break;
     }
-    (void) fclose(filePointer);
+    (fn) fclose(filePointer);
 }
 
 static bool SemicolonRail_patternMatches(const SemicolonIgnorePattern *patternPointer, const char *relativePath) {
@@ -320,14 +320,14 @@ static TerminalTreeNodeId SemicolonRail_addNode(SemicolonState *semicolonState, 
         return TERMINAL_TREE_NO_NODE;
 
     SemicolonRailEntry *entry = &(*semicolonState).railEntries[(*semicolonState).railEntryCount];
-    (void) snprintf((*entry).entryLabel, sizeof (*entry).entryLabel, "%s", entryName);
-    (void) snprintf((*entry).entryPath, sizeof (*entry).entryPath, "%s", entryPath);
+    (fn) snprintf((*entry).entryLabel, sizeof (*entry).entryLabel, "%s", entryName);
+    (fn) snprintf((*entry).entryPath, sizeof (*entry).entryPath, "%s", entryPath);
     (*entry).parentNodeId = parentNodeId;
     (*entry).isFolder = isFolder;
     (*entry).isLoaded = false;
     (*semicolonState).railEntryCount++;
 
-    (void) TerminalTreeView_setLabel((*semicolonState).treeView, nodeId, (*entry).entryLabel);
+    (fn) TerminalTreeView_setLabel((*semicolonState).treeView, nodeId, (*entry).entryLabel);
     return nodeId;
 }
 
@@ -348,7 +348,7 @@ bool SemicolonRail_readChildren(SemicolonState *semicolonState, TerminalTreeNode
         if (strcmp((*dirItem).d_name, ".") == 0 || strcmp((*dirItem).d_name, "..") == 0)
             continue;
         char childPath[SEMICOLON_V2_MAX_PATH];
-        (void) snprintf(childPath, sizeof childPath, "%s/%s", (*parentEntry).entryPath, (*dirItem).d_name);
+        (fn) snprintf(childPath, sizeof childPath, "%s/%s", (*parentEntry).entryPath, (*dirItem).d_name);
         struct stat fileInfo;
         if (stat(childPath, &fileInfo) != 0)
             continue;
@@ -358,23 +358,23 @@ bool SemicolonRail_readChildren(SemicolonState *semicolonState, TerminalTreeNode
         if (!isFolder && !S_ISREG(fileInfo.st_mode))
             continue;
 
-        (void) snprintf(foundEntries[foundCount].entryName, sizeof foundEntries[foundCount].entryName,
+        (fn) snprintf(foundEntries[foundCount].entryName, sizeof foundEntries[foundCount].entryName,
                         "%s", (*dirItem).d_name);
         foundEntries[foundCount].isFolder = isFolder;
         foundCount++;
     }
-    (void) closedir(dirHandle);
+    (fn) closedir(dirHandle);
 
     if (foundCount > 1u)
         qsort(foundEntries, foundCount, sizeof(SemicolonDirEntry), SemicolonRail_compareDirEntries);
 
     char currentParentPath[SEMICOLON_V2_MAX_PATH];
-    (void) snprintf(currentParentPath, sizeof currentParentPath, "%s", (*parentEntry).entryPath);
+    (fn) snprintf(currentParentPath, sizeof currentParentPath, "%s", (*parentEntry).entryPath);
 
     for (bytes entryIndex = 0u; entryIndex < foundCount; ++entryIndex) {
         char childPath[SEMICOLON_V2_MAX_PATH];
-        (void) snprintf(childPath, sizeof childPath, "%s/%s", currentParentPath, foundEntries[entryIndex].entryName);
-        (void) SemicolonRail_addNode(semicolonState, parentNodeId, foundEntries[entryIndex].entryName,
+        (fn) snprintf(childPath, sizeof childPath, "%s/%s", currentParentPath, foundEntries[entryIndex].entryName);
+        (fn) SemicolonRail_addNode(semicolonState, parentNodeId, foundEntries[entryIndex].entryName,
                                      childPath, foundEntries[entryIndex].isFolder);
     }
     return true;
@@ -393,7 +393,7 @@ static TerminalTreeNodeId SemicolonRail_findChild(SemicolonState *semicolonState
 bool SemicolonRail_scanDirectory(SemicolonState *semicolonState, const char *rootDirectory) {
     if (semicolonState == nullptr || rootDirectory == nullptr || *rootDirectory == '\0')
         return false;
-    (void) snprintf((*semicolonState).railRootDirectory, sizeof (*semicolonState).railRootDirectory, "%s", rootDirectory);
+    (fn) snprintf((*semicolonState).railRootDirectory, sizeof (*semicolonState).railRootDirectory, "%s", rootDirectory);
 
     if ((*semicolonState).treeView != nullptr)
         TerminalTreeView_free((*semicolonState).treeView);
@@ -412,8 +412,8 @@ bool SemicolonRail_scanDirectory(SemicolonState *semicolonState, const char *roo
     if ((*semicolonState).railRootNodeId == TERMINAL_TREE_NO_NODE)
         return false;
 
-    (void) SemicolonRail_readChildren(semicolonState, (*semicolonState).railRootNodeId);
-    (void) TerminalTreeView_setExpanded((*semicolonState).treeView, (*semicolonState).railRootNodeId, true);
+    (fn) SemicolonRail_readChildren(semicolonState, (*semicolonState).railRootNodeId);
+    (fn) TerminalTreeView_setExpanded((*semicolonState).treeView, (*semicolonState).railRootNodeId, true);
     return true;
 }
 
@@ -440,15 +440,15 @@ bool SemicolonRail_revealPath(SemicolonState *semicolonState, const char *filePa
         if (*cursorPointer == '/')
             ++cursorPointer;
 
-        (void) SemicolonRail_readChildren(semicolonState, currentNodeId);
+        (fn) SemicolonRail_readChildren(semicolonState, currentNodeId);
         TerminalTreeNodeId childNodeId = SemicolonRail_findChild(semicolonState, currentNodeId, componentBuffer);
         if (childNodeId == TERMINAL_TREE_NO_NODE)
             return false;
         currentNodeId = childNodeId;
         if (*cursorPointer != '\0')
-            (void) TerminalTreeView_setExpanded((*semicolonState).treeView, currentNodeId, true);
+            (fn) TerminalTreeView_setExpanded((*semicolonState).treeView, currentNodeId, true);
     }
-    (void) TerminalTreeView_setSelected((*semicolonState).treeView, currentNodeId);
+    (fn) TerminalTreeView_setSelected((*semicolonState).treeView, currentNodeId);
     return true;
 }
 
@@ -462,12 +462,12 @@ static bytes SemicolonRail_calculateIndent(TerminalTreeRow treeRow) {
     return (depthLevel > deepestLevel ? deepestLevel : depthLevel) * 2u;
 }
 
-void SemicolonRail_syncVisibleRows(SemicolonState *semicolonState, bytes visibleRowCount) {
+fn SemicolonRail_syncVisibleRows(SemicolonState *semicolonState, bytes visibleRowCount) {
     if (semicolonState == nullptr || (*semicolonState).treeView == nullptr)
         return;
     SemicolonRail_reloadGitignore(semicolonState);
 
-    (void) TerminalTreeView_setViewportRows((*semicolonState).treeView, visibleRowCount + 1u);
+    (fn) TerminalTreeView_setViewportRows((*semicolonState).treeView, visibleRowCount + 1u);
     bytes firstRowIndex = TerminalTreeView_scrollRow((*semicolonState).treeView);
     bytes totalVisibleCount = TerminalTreeView_visibleCount((*semicolonState).treeView);
 
@@ -476,8 +476,8 @@ void SemicolonRail_syncVisibleRows(SemicolonState *semicolonState, bytes visible
         if (rowTextView == nullptr)
             continue;
         if (firstRowIndex + rowIndex + 1u >= totalVisibleCount) {
-            (void) TerminalText_setText(rowTextView, "", 0u);
-            (void) TerminalText_setBackgroundColor(rowTextView, TERMINAL_COLOR_DEFAULT);
+            (fn) TerminalText_setText(rowTextView, "", 0u);
+            (fn) TerminalText_setBackgroundColor(rowTextView, TERMINAL_COLOR_DEFAULT);
             continue;
         }
 
@@ -490,12 +490,12 @@ void SemicolonRail_syncVisibleRows(SemicolonState *semicolonState, bytes visible
         formattedBuffer[writtenBytes] = '\0';
 
         if (record.folder) {
-            (void) snprintf(formattedBuffer + writtenBytes, sizeof formattedBuffer - writtenBytes,
+            (fn) snprintf(formattedBuffer + writtenBytes, sizeof formattedBuffer - writtenBytes,
                             "%s %s %s", record.expanded ? "⌄" : "›",
                             (*semicolonState).isNerdIcons ? (record.expanded ? "\uf07c" : "\uf07b") : "[]",
                             record.label);
         } else {
-            (void) snprintf(formattedBuffer + writtenBytes, sizeof formattedBuffer - writtenBytes,
+            (fn) snprintf(formattedBuffer + writtenBytes, sizeof formattedBuffer - writtenBytes,
                             "  %s %s", SemicolonRail_getFileIcon(record.label, (*semicolonState).isNerdIcons),
                             record.label);
         }
@@ -520,14 +520,14 @@ void SemicolonRail_syncVisibleRows(SemicolonState *semicolonState, bytes visible
         formattedBuffer[rowLength] = '\0';
 
         memcpy((*semicolonState).railRowBuffers[rowIndex], formattedBuffer, rowLength + 1u);
-        (void) TerminalText_setText(rowTextView, (*semicolonState).railRowBuffers[rowIndex], rowLength);
-        (void) TerminalText_setForegroundColor(rowTextView, SEMICOLON_V2_TEXT);
-        (void) TerminalText_setBackgroundColor(rowTextView, record.selected ? SEMICOLON_V2_SELECTION
+        (fn) TerminalText_setText(rowTextView, (*semicolonState).railRowBuffers[rowIndex], rowLength);
+        (fn) TerminalText_setForegroundColor(rowTextView, SEMICOLON_V2_TEXT);
+        (fn) TerminalText_setBackgroundColor(rowTextView, record.selected ? SEMICOLON_V2_SELECTION
                                                                             : TERMINAL_COLOR_DEFAULT);
     }
 }
 
-void SemicolonRail_paintColors(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas) {
+fn SemicolonRail_paintColors(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas) {
     if (semicolonState == nullptr || terminalCanvas == nullptr || (*semicolonState).treeView == nullptr)
         return;
     bytes canvasWidth = TerminalCanvas_getWidth(terminalCanvas);
@@ -540,7 +540,7 @@ void SemicolonRail_paintColors(SemicolonState *semicolonState, TerminalCanvas *t
         TerminalTreeRow rootRecord = TerminalTreeView_rowAt((*semicolonState).treeView, 0u);
         char rootTitle[256];
         char rootClipped[256];
-        (void) snprintf(rootTitle, sizeof rootTitle, " %s %s %s",
+        (fn) snprintf(rootTitle, sizeof rootTitle, " %s %s %s",
                         rootRecord.expanded ? "⌄" : "›",
                         (*semicolonState).isNerdIcons ? (rootRecord.expanded ? "\uf07c" : "\uf07b") : "[]",
                         rootRecord.label);
@@ -596,7 +596,7 @@ void SemicolonRail_paintColors(SemicolonState *semicolonState, TerminalCanvas *t
     }
 }
 
-void SemicolonRail_handlePointerClick(SemicolonState *semicolonState, bytes rowCoordinate) {
+fn SemicolonRail_handlePointerClick(SemicolonState *semicolonState, bytes rowCoordinate) {
     if (semicolonState == nullptr || (*semicolonState).treeView == nullptr)
         return;
 
@@ -609,13 +609,13 @@ void SemicolonRail_handlePointerClick(SemicolonState *semicolonState, bytes rowC
     if (TerminalTreeView_isFolder((*semicolonState).treeView, clickedNodeId)) {
         bool isNowExpanded = !TerminalTreeView_isExpanded((*semicolonState).treeView, clickedNodeId);
         if (isNowExpanded)
-            (void) SemicolonRail_readChildren(semicolonState, clickedNodeId);
-        (void) TerminalTreeView_setExpanded((*semicolonState).treeView, clickedNodeId, isNowExpanded);
+            (fn) SemicolonRail_readChildren(semicolonState, clickedNodeId);
+        (fn) TerminalTreeView_setExpanded((*semicolonState).treeView, clickedNodeId, isNowExpanded);
     } else {
-        (void) TerminalTreeView_setSelected((*semicolonState).treeView, clickedNodeId);
+        (fn) TerminalTreeView_setSelected((*semicolonState).treeView, clickedNodeId);
         SemicolonRailEntry *entry = SemicolonRail_entryForId(semicolonState, clickedNodeId);
         if (entry != nullptr) {
-            (void) SemicolonState_openFile(semicolonState, (*entry).entryPath);
+            (fn) SemicolonState_openFile(semicolonState, (*entry).entryPath);
         }
     }
 }
@@ -638,7 +638,7 @@ TerminalPanel *createRailPanel(SemicolonState *semicolonState) {
             TerminalPanel_free(railPanel);
             return nullptr;
         }
-        (void) TerminalText_setForegroundColor(rowTextView, SEMICOLON_V2_TEXT);
+        (fn) TerminalText_setForegroundColor(rowTextView, SEMICOLON_V2_TEXT);
         (*semicolonState).railRowTexts[rowIndex] = rowTextView;
     }
     (*semicolonState).railRowCount = SEMICOLON_V2_MAX_ROWS;

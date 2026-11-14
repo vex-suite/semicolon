@@ -46,7 +46,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="semicolon-language-") as directory:
         directory = Path(directory)
         source = directory / "main.c"
-        source.write_bytes(("int main(void) { return 42; } /*" + " " * 160 + "*/\n"
+        source.write_bytes(("int main() { return 42; } /*" + " " * 160 + "*/\n"
                             "/* start\nstill */ return 42;\n\"界\" name\n").encode()
                            + b"x\xff int k;\n")
         plain = directory / "notes.txt"
@@ -110,7 +110,7 @@ def main():
                 os.environ["SEMICOLON_LANGUAGE_SOURCE_DIR"] = previous
         negative = subprocess.run(
             [compiler, *flags, *includes, "-x", "c", "-fsyntax-only", "-"],
-            input='#include "editor/semicolon_syntax.h"\nvoid f(void) { (void) SemicolonSyntax(1u); }\n',
+            input='#include "editor/semicolon_syntax.h"\nfn f() { () SemicolonSyntax(1u); }\n',
             capture_output=True, text=True, timeout=30)
         assert negative.returncode != 0 and "too many arguments" in negative.stderr, negative.stderr
         print("PASS missing Language dependency preserves artifact; unsupported constructor arity rejects")

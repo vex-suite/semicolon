@@ -43,7 +43,7 @@ def c23_std_flag(compiler):
     """
     compiler_cmd = shlex.split(compiler) if isinstance(compiler, str) else list(compiler)
     with tempfile.NamedTemporaryFile("w", suffix=".c", delete=False) as probe:
-        probe.write("#include <stddef.h>\nint main(void) { void *p = nullptr; return p != 0; }\n")
+        probe.write("#include <stddef.h>\nint main() { any p = nullptr; return p != 0; }\n")
         probe_path = probe.name
     try:
         for flag in ("-std=gnu23", "-std=gnu2x"):

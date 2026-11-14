@@ -42,7 +42,7 @@ bytes SemicolonCode_visibleRows(bytes terminalHeight) {
     return terminalHeight > 2u ? terminalHeight - 2u : 0u;
 }
 
-static void SemicolonCode_freeFileLines(SemicolonState *semicolonState) {
+static fn SemicolonCode_freeFileLines(SemicolonState *semicolonState) {
     if (semicolonState == nullptr)
         return;
     if ((*semicolonState).fileLines != nullptr) {
@@ -113,8 +113,8 @@ bool SemicolonCode_loadFile(SemicolonState *semicolonState, const char *filePath
 
     const char *slashPointer = strrchr(filePath, '/');
     const char *baseName = slashPointer != nullptr ? slashPointer + 1u : filePath;
-    (void) snprintf((*semicolonState).openFileName, sizeof (*semicolonState).openFileName, "%s", baseName);
-    (void) snprintf((*semicolonState).openFilePath, sizeof (*semicolonState).openFilePath, "%s", filePath);
+    (fn) snprintf((*semicolonState).openFileName, sizeof (*semicolonState).openFileName, "%s", baseName);
+    (fn) snprintf((*semicolonState).openFilePath, sizeof (*semicolonState).openFilePath, "%s", filePath);
 
     char readBuffer[4096];
     char *accumulatedBytes = nullptr;
@@ -123,7 +123,7 @@ bool SemicolonCode_loadFile(SemicolonState *semicolonState, const char *filePath
     while ((readChunk = fread(readBuffer, 1u, sizeof readBuffer, filePointer)) > 0u) {
         char *grownBytes = (char*) Memory_alloc(TYPE_BYTE_ARRAY, totalBytes + readChunk + 1u);
         if (grownBytes == nullptr) {
-            (void) fclose(filePointer);
+            (fn) fclose(filePointer);
             if (accumulatedBytes != nullptr)
                 Memory_free(accumulatedBytes);
             return false;
@@ -137,7 +137,7 @@ bool SemicolonCode_loadFile(SemicolonState *semicolonState, const char *filePath
         grownBytes[totalBytes] = '\0';
         accumulatedBytes = grownBytes;
     }
-    (void) fclose(filePointer);
+    (fn) fclose(filePointer);
 
     if (totalBytes > 0u && accumulatedBytes != nullptr) {
         bytes lineStartIndex = 0u;
@@ -190,20 +190,20 @@ bool SemicolonCode_loadFile(SemicolonState *semicolonState, const char *filePath
     if ((*semicolonState).isMarkdownFile) {
         (*semicolonState).markdownView = TerminalMarkdownView();
         if ((*semicolonState).markdownView != nullptr) {
-            (void) TerminalMarkdownView_setSource(
+            (fn) TerminalMarkdownView_setSource(
                 (*semicolonState).markdownView,
                 (const char *const *) (*semicolonState).fileLines,
                 (*semicolonState).fileLineCount);
-            (void) TerminalMarkdownView_setScroll((*semicolonState).markdownView, (*semicolonState).editorScrollTop);
-            (void) TerminalMarkdownView_setScrollX((*semicolonState).markdownView, (*semicolonState).editorScrollLeft);
+            (fn) TerminalMarkdownView_setScroll((*semicolonState).markdownView, (*semicolonState).editorScrollTop);
+            (fn) TerminalMarkdownView_setScrollX((*semicolonState).markdownView, (*semicolonState).editorScrollLeft);
         }
-        (void) SemicolonCode_setMarkdownMode(semicolonState, (*semicolonState).isMarkdownPreview);
+        (fn) SemicolonCode_setMarkdownMode(semicolonState, (*semicolonState).isMarkdownPreview);
     }
 
     return true;
 }
 
-void SemicolonCode_syncVisibleRows(SemicolonState *semicolonState, bytes firstLineIndex,
+fn SemicolonCode_syncVisibleRows(SemicolonState *semicolonState, bytes firstLineIndex,
                                    bytes leftColumnIndex, bytes visibleRowCount) {
     if (semicolonState == nullptr)
         return;
@@ -215,15 +215,15 @@ void SemicolonCode_syncVisibleRows(SemicolonState *semicolonState, bytes firstLi
             continue;
 
         if ((*semicolonState).isMarkdownFile && (*semicolonState).isMarkdownPreview) {
-            (void) TerminalText_setText(gutterTextView, "", 0u);
-            (void) TerminalText_setText(codeTextView, "", 0u);
+            (fn) TerminalText_setText(gutterTextView, "", 0u);
+            (fn) TerminalText_setText(codeTextView, "", 0u);
             continue;
         }
 
         bytes currentLineIndex = firstLineIndex + rowIndex;
         if (rowIndex >= visibleRowCount || currentLineIndex >= (*semicolonState).fileLineCount) {
-            (void) TerminalText_setText(gutterTextView, "", 0u);
-            (void) TerminalText_setText(codeTextView, "", 0u);
+            (fn) TerminalText_setText(gutterTextView, "", 0u);
+            (fn) TerminalText_setText(codeTextView, "", 0u);
             continue;
         }
 
@@ -233,16 +233,16 @@ void SemicolonCode_syncVisibleRows(SemicolonState *semicolonState, bytes firstLi
         if (writtenGutter < 0)
             writtenGutter = 0;
 
-        (void) TerminalText_setText(gutterTextView, (*semicolonState).gutterRowBuffers[rowIndex], (bytes) writtenGutter);
+        (fn) TerminalText_setText(gutterTextView, (*semicolonState).gutterRowBuffers[rowIndex], (bytes) writtenGutter);
 
         const char *lineBytes = (*semicolonState).fileLines[currentLineIndex];
         bytes lineLength = (*semicolonState).fileLineLengths[currentLineIndex];
         bytes skipBytes = SemicolonUtil_bytesForCells(lineBytes, lineLength, leftColumnIndex);
-        (void) TerminalText_setText(codeTextView, lineBytes + skipBytes, lineLength - skipBytes);
+        (fn) TerminalText_setText(codeTextView, lineBytes + skipBytes, lineLength - skipBytes);
     }
 }
 
-void SemicolonCode_paintSyntax(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas,
+fn SemicolonCode_paintSyntax(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas,
                                bytes firstLineIndex, bytes leftColumnIndex) {
     if (semicolonState == nullptr || terminalCanvas == nullptr
         || !(*semicolonState).isSyntaxCurrent || (*semicolonState).syntaxHighlighter == nullptr
@@ -293,7 +293,7 @@ void SemicolonCode_paintSyntax(SemicolonState *semicolonState, TerminalCanvas *t
     }
 }
 
-void SemicolonCode_paintMarkdownPreview(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas) {
+fn SemicolonCode_paintMarkdownPreview(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas) {
     if (semicolonState == nullptr || terminalCanvas == nullptr || !(*semicolonState).isMarkdownFile
         || !(*semicolonState).isMarkdownPreview || (*semicolonState).markdownView == nullptr)
         return;
@@ -311,12 +311,12 @@ void SemicolonCode_paintMarkdownPreview(SemicolonState *semicolonState, Terminal
 
     if (!TerminalMarkdownView_setViewport((*semicolonState).markdownView, contentWidth))
         return;
-    (void) TerminalMarkdownView_setVisibleRows((*semicolonState).markdownView, contentHeight);
+    (fn) TerminalMarkdownView_setVisibleRows((*semicolonState).markdownView, contentHeight);
     TerminalCanvas_fill(&contentCanvas, ' ', TerminalPen());
     TerminalMarkdownView_render((*semicolonState).markdownView, &contentCanvas);
 }
 
-void SemicolonCode_paintCursor(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas,
+fn SemicolonCode_paintCursor(SemicolonState *semicolonState, TerminalCanvas *terminalCanvas,
                                bytes firstLineIndex, bytes leftColumnIndex) {
     if (semicolonState == nullptr || terminalCanvas == nullptr || !(*semicolonState).isCursorVisible
         || ((*semicolonState).isMarkdownFile && (*semicolonState).isMarkdownPreview))
@@ -392,8 +392,8 @@ TerminalPanel *createCodePanel(SemicolonState *semicolonState) {
             TerminalPanel_free(codeAreaPanel);
             return nullptr;
         }
-        (void) TerminalText_setForegroundColor(numberTextView, SEMICOLON_V2_GUTTER);
-        (void) TerminalText_setForegroundColor(lineTextView, SEMICOLON_V2_TEXT);
+        (fn) TerminalText_setForegroundColor(numberTextView, SEMICOLON_V2_GUTTER);
+        (fn) TerminalText_setForegroundColor(lineTextView, SEMICOLON_V2_TEXT);
         (*semicolonState).gutterRowTexts[rowIndex] = numberTextView;
         (*semicolonState).codeRowTexts[rowIndex] = lineTextView;
     }
@@ -416,46 +416,46 @@ TerminalPanel *createCodePanel(SemicolonState *semicolonState) {
 
     const char *hintLabel = (*semicolonState).isNerdIcons ? "\uf071 off" : "! off";
     TerminalText *hintChip = TerminalText(hintLabel);
-    (void) TerminalText_setBrackets(hintChip, '[', ']');
-    (void) TerminalText_setForegroundColor(hintChip, SEMICOLON_V2_MUTED);
+    (fn) TerminalText_setBrackets(hintChip, '[', ']');
+    (fn) TerminalText_setForegroundColor(hintChip, SEMICOLON_V2_MUTED);
     (*semicolonState).hintChipText = hintChip;
-    (void) TerminalPanel_addText(hintRowPanel, hintChip, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_RIGHT, 9u));
+    (fn) TerminalPanel_addText(hintRowPanel, hintChip, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_RIGHT, 9u));
 
     TerminalText *previewChip = TerminalText((*semicolonState).isMarkdownFile ? " Preview" : "");
     TerminalText *codeChip = TerminalText((*semicolonState).isMarkdownFile ? " Code" : "");
     if ((*semicolonState).isMarkdownFile) {
-        (void) TerminalText_setBrackets(previewChip, '[', ']');
-        (void) TerminalText_setBrackets(codeChip, '[', ']');
+        (fn) TerminalText_setBrackets(previewChip, '[', ']');
+        (fn) TerminalText_setBrackets(codeChip, '[', ']');
     }
-    (void) TerminalText_setForegroundColor(previewChip, SEMICOLON_V2_MUTED);
-    (void) TerminalText_setForegroundColor(codeChip, SEMICOLON_V2_MUTED);
+    (fn) TerminalText_setForegroundColor(previewChip, SEMICOLON_V2_MUTED);
+    (fn) TerminalText_setForegroundColor(codeChip, SEMICOLON_V2_MUTED);
     (*semicolonState).previewModeChipText = previewChip;
     (*semicolonState).codeModeChipText = codeChip;
 
-    (void) TerminalPanel_addText(modeRowPanel, previewChip, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_RIGHT, 11u));
-    (void) TerminalPanel_addText(modeRowPanel, codeChip, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_RIGHT, 9u));
+    (fn) TerminalPanel_addText(modeRowPanel, previewChip, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_RIGHT, 11u));
+    (fn) TerminalPanel_addText(modeRowPanel, codeChip, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_RIGHT, 9u));
 
-    (void) TerminalPanel_addPanel(actionsPanel, hintRowPanel, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_TOP, 1u));
-    (void) TerminalPanel_addPanel(actionsPanel, modeRowPanel, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_TOP, 1u));
+    (fn) TerminalPanel_addPanel(actionsPanel, hintRowPanel, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_TOP, 1u));
+    (fn) TerminalPanel_addPanel(actionsPanel, modeRowPanel, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_TOP, 1u));
 
-    (void) TerminalPanel_addPanel(codeAreaPanel, rowsPanel, TerminalAnchor_0());
-    (void) TerminalPanel_addPanel(codeAreaPanel, actionsPanel, TerminalAnchor_0());
+    (fn) TerminalPanel_addPanel(codeAreaPanel, rowsPanel, TerminalAnchor_0());
+    (fn) TerminalPanel_addPanel(codeAreaPanel, actionsPanel, TerminalAnchor_0());
 
     TerminalText *gapTextView = TerminalText("  ");
-    (void) TerminalText_setForegroundColor(gapTextView, SEMICOLON_V2_TEXT);
+    (fn) TerminalText_setForegroundColor(gapTextView, SEMICOLON_V2_TEXT);
 
     bytes gutterWidth = (*semicolonState).lineNumberWidth + 3u;
     (*semicolonState).gutterChildId = TerminalPanel_addPanel(
         editorPanel, gutterPanel, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_LEFT, gutterWidth));
-    (void) TerminalPanel_addText(editorPanel, gapTextView, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_LEFT, 2u));
-    (void) TerminalPanel_addPanel(editorPanel, codeAreaPanel, TerminalAnchor_0());
+    (fn) TerminalPanel_addText(editorPanel, gapTextView, TerminalAnchor_2(TERMINAL_ANCHOR_BAND_LEFT, 2u));
+    (fn) TerminalPanel_addPanel(editorPanel, codeAreaPanel, TerminalAnchor_0());
 
     (*semicolonState).gutterSubPanel = gutterPanel;
     (*semicolonState).actionSubPanel = actionsPanel;
     (*semicolonState).editorSubPanel = editorPanel;
     (*semicolonState).codePanel = editorPanel;
     if ((*semicolonState).isMarkdownFile)
-        (void) SemicolonCode_setMarkdownMode(semicolonState, (*semicolonState).isMarkdownPreview);
+        (fn) SemicolonCode_setMarkdownMode(semicolonState, (*semicolonState).isMarkdownPreview);
     return editorPanel;
 }
 
@@ -464,22 +464,22 @@ bool SemicolonCode_setMarkdownMode(SemicolonState *semicolonState, bool isPrevie
         return false;
     (*semicolonState).isMarkdownPreview = isPreviewMode;
     if (isPreviewMode && (*semicolonState).markdownView != nullptr) {
-        (void) TerminalMarkdownView_setScroll((*semicolonState).markdownView, (*semicolonState).editorScrollTop);
-        (void) TerminalMarkdownView_setScrollX((*semicolonState).markdownView, (*semicolonState).editorScrollLeft);
+        (fn) TerminalMarkdownView_setScroll((*semicolonState).markdownView, (*semicolonState).editorScrollTop);
+        (fn) TerminalMarkdownView_setScrollX((*semicolonState).markdownView, (*semicolonState).editorScrollLeft);
     }
     if ((*semicolonState).codeModeChipText != nullptr) {
-        (void) TerminalText_setForegroundColor(
+        (fn) TerminalText_setForegroundColor(
             (*semicolonState).codeModeChipText,
             isPreviewMode ? SEMICOLON_V2_MUTED : SEMICOLON_V2_ACCENT);
-        (void) TerminalText_setBackgroundColor(
+        (fn) TerminalText_setBackgroundColor(
             (*semicolonState).codeModeChipText,
             isPreviewMode ? TERMINAL_COLOR_DEFAULT : SEMICOLON_V2_SELECTION);
     }
     if ((*semicolonState).previewModeChipText != nullptr) {
-        (void) TerminalText_setForegroundColor(
+        (fn) TerminalText_setForegroundColor(
             (*semicolonState).previewModeChipText,
             isPreviewMode ? SEMICOLON_V2_ACCENT : SEMICOLON_V2_MUTED);
-        (void) TerminalText_setBackgroundColor(
+        (fn) TerminalText_setBackgroundColor(
             (*semicolonState).previewModeChipText,
             isPreviewMode ? SEMICOLON_V2_SELECTION : TERMINAL_COLOR_DEFAULT);
     }

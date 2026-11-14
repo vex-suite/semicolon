@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
     assert(argc == 3);
     initTextures();
     gNerdIcons = false;
-    (void) snprintf(gOpenPath, sizeof gOpenPath, "%s", argv[1]);
+    (fn) snprintf(gOpenPath, sizeof gOpenPath, "%s", argv[1]);
     FileText file;
     assert(fileLoad(&file, argv[1]));
     assert(file.syntax != nullptr && file.syntaxPending && !file.syntaxCurrent);

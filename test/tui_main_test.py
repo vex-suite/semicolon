@@ -746,7 +746,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="semicolon-copy-") as directory:
         copy_project = Path(directory)
         copy_file = copy_project / "copy.md"
-        copy_file.write_text("# Copymarker\n\n```\nint main(void) {\n    return 0;\n}\n```\n\nAfter paragraph.\n")
+        copy_file.write_text("# Copymarker\n\n```\nint main() {\n    return 0;\n}\n```\n\nAfter paragraph.\n")
         copy_tui = Pty(22, 112,
                        argv=[str(BINARY), "--root", str(copy_project), "--file",
                              str(copy_file)],
@@ -773,7 +773,7 @@ def main():
             check(b"\x1b]52;" not in bytes(copy_tui.captured),
                   "a copy wrote an OSC 52 escape instead of using the pasteboard")
             if shutil.which("pbpaste") is not None:
-                matched, pasted = pasteboard_settles(b"int main(void) {\n    return 0;\n}")
+                matched, pasted = pasteboard_settles(b"int main() {\n    return 0;\n}")
                 check(matched,
                       f"the clipboard did not hold the fenced block: {pasted!r}")
             # The check is feedback, not retained state: the copy glyph comes back when

@@ -28,8 +28,8 @@
  *   TerminalPen pens[SYNTAX_ROLE_IDENTIFIER + 1u] current role palette
  *   bytes refusals               storage refusals in this owner's lifetime
  * FUNCTION REGISTRY
- *   SemicolonSyntax *SemicolonSyntax_0(void), SemicolonSyntax(), zero()
- *   void SemicolonSyntax_free(SemicolonSyntax *self)
+ *   SemicolonSyntax *SemicolonSyntax_0(), SemicolonSyntax(), zero()
+ *   fn SemicolonSyntax_free(SemicolonSyntax *self)
  *   bool SemicolonSyntax_setLines(self,const char *const *lines,
  *                                const bytes *lengths,bytes count)
  *   bool SemicolonSyntax_acceptsPath(const char *path)
@@ -80,7 +80,7 @@ static bool refuse(SemicolonSyntax *self, bytes request) {
     return false;
 }
 
-SemicolonSyntax *SemicolonSyntax_0(void) {
+SemicolonSyntax *SemicolonSyntax_0() {
     SemicolonSyntax *self = calloc(1u, sizeof *self);
     if (self == nullptr) {
         THROW("SemicolonSyntax owner allocation refused: request %zu bytes", sizeof *self);
@@ -113,7 +113,7 @@ SemicolonSyntax *SemicolonSyntax_0(void) {
     return self;
 }
 
-void SemicolonSyntax_free(SemicolonSyntax *self) {
+fn SemicolonSyntax_free(SemicolonSyntax *self) {
     if (self == nullptr)
         return;
     C23Highlights_free((*self).highlights);
@@ -241,8 +241,8 @@ TerminalProjection SemicolonSyntax_toStringStruct(const SemicolonSyntax *self) {
         return TerminalProjection_format("nullptr");
     TerminalProjection projection = TerminalProjection_format(
         "SemicolonSyntax { source=%p, length=%zu, starts=%p, lineCount=%zu, highlights=%p, spanCount=%zu, pens=[",
-        (void*) (*self).source, (*self).length, (void*) (*self).starts,
-        (*self).lineCount, (void*) (*self).highlights,
+        (any) (*self).source, (*self).length, (any) (*self).starts,
+        (*self).lineCount, (any) (*self).highlights,
         C23Highlights_getCount((*self).highlights));
     for (bytes role = 0u; role <= SYNTAX_ROLE_IDENTIFIER; ++role) {
         TerminalPen pen = (*self).pens[role];
