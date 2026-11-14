@@ -5442,15 +5442,15 @@ static TerminalPointerEvent ncursesMouseEvent(void) {
         else
             event.button = TERMINAL_BUTTON_RIGHT;
     } else if ((mouse.bstate & (BUTTON1_PRESSED | BUTTON1_CLICKED
-                                | BUTTON1_f64_CLICKED | BUTTON1_TRIPLE_CLICKED)) != 0) {
+                                | BUTTON1_DOUBLE_CLICKED | BUTTON1_TRIPLE_CLICKED)) != 0) {
         event.kind = TERMINAL_POINTER_PRESS;
         event.button = TERMINAL_BUTTON_LEFT;
     } else if ((mouse.bstate & (BUTTON2_PRESSED | BUTTON2_CLICKED
-                                | BUTTON2_f64_CLICKED | BUTTON2_TRIPLE_CLICKED)) != 0) {
+                                | BUTTON2_DOUBLE_CLICKED | BUTTON2_TRIPLE_CLICKED)) != 0) {
         event.kind = TERMINAL_POINTER_PRESS;
         event.button = TERMINAL_BUTTON_MIDDLE;
     } else if ((mouse.bstate & (BUTTON3_PRESSED | BUTTON3_CLICKED
-                                | BUTTON3_f64_CLICKED | BUTTON3_TRIPLE_CLICKED)) != 0) {
+                                | BUTTON3_DOUBLE_CLICKED | BUTTON3_TRIPLE_CLICKED)) != 0) {
         event.kind = TERMINAL_POINTER_PRESS;
         event.button = TERMINAL_BUTTON_RIGHT;
     } else if ((mouse.bstate & REPORT_MOUSE_POSITION) != 0) {
